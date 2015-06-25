@@ -103,13 +103,6 @@ class RestedServiceProvider extends ServiceProvider
                 'uses' => $callable,
             ]);
 
-
-            // @todo: permissions
-            // add permission requirements to the route if there are any
-            /*if (sizeof($action['required_permission']) > 0) {
-                $controller->secure($action['required_permission']);
-            }*/
-
             //$this->routes->add($routeName, $route);
 
             /* $actionCacheEntry = [
