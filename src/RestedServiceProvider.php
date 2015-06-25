@@ -95,13 +95,13 @@ class RestedServiceProvider extends ServiceProvider
             }
 
             $routeName = $action->getRouteName();
-            $roleName = $action->getRoleName();
+            $roleNames = $action->getRoleNames();
             $callable = sprintf('%s@%s', $class, $action->getCallable());
             $route = $router->{$action->getVerb()}($href, [
                 'as' => $routeName,
-                //'middleware' => 'role_check',
+                'middleware' => 'role_check',
                 'rested_type' => $action->getType(),
-                'role' => $roleName,
+                'roles' => $roleNames,
                 'uses' => $callable,
             ]);
 

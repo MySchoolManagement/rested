@@ -1,15 +1,17 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Helper;
+
 class Field
 {
 
-    private $getter;
-    private $setter;
+    private $cacheRoleNames;
     private $description;
+    private $getter;
     private $model;
     private $name;
-    private $requiredPermission;
+    private $setter;
     private $type;
     private $validationParameters;
 
@@ -50,11 +52,11 @@ class Field
     }
 
     /**
-     * @return \Rested\Definition\InstanceDefinition
+     * @return \Rested\Definition\Model
      */
-    public function getInstanceDefinition()
+    public function getModel()
     {
-        return $this->model->getInstanceDefinition();
+        return $this->model;
     }
 
     public function getName()
@@ -62,15 +64,23 @@ class Field
         return $this->name;
     }
 
-    public function getRequiredPermission()
+    public function getRoleNames($operation)
     {
-        if ($this->requiredPermission !== null) {
-            return $this->requiredPermission;
+        if ($this->cacheRoleNames !== null) {
+            return $this->cacheRoleNames;
         }
 
-        // @todo: $this->requiredPermission = sprintf('ROLE_DATA_%s_%s', Util::formatPermissionString($this->getMapping()->getDefiningClass()), Util::formatPermissionString($this->getName()));
+        $endpoint = $this->getModel()->getDefinition()->getEndpoint();
 
-        return $this->requiredPermission;
+        $roles = [
+            Helper::makeRoleName($endpoint, 'field', $this->getName()),
+            Helper::makeRoleName($endpoint, 'field', $this->getName(), $operation),
+            Helper::makeRoleName($endpoint, 'field', 'all'),
+            Helper::makeRoleName($endpoint, 'field', 'all', $operation),
+        ];
+
+
+        return ($this->cacheRoleName = $roles);
     }
 
     public function getType()

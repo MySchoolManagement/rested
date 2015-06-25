@@ -1,12 +1,13 @@
 <?php
 namespace Rested;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
+use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 abstract class AbstractResource extends Controller
 {
@@ -26,7 +27,7 @@ abstract class AbstractResource extends Controller
             $action = $route->getAction();
 
             $this->context = new RequestContext($router->getCurrentRequest(), $this);
-            $this->urlService = app('url');
+            $this->urlService = app('url'); // FIXME: use DI
             $this->actionType = $action['rested_type'];
         }
     }
@@ -39,8 +40,6 @@ abstract class AbstractResource extends Controller
      *
      * @param string $message Message to pass to the client.
      * @param integer $statusCode HTTP status code.
-     *
-     * @return Response
      */
     public function abort($message, $statusCode)
     {
@@ -87,7 +86,7 @@ abstract class AbstractResource extends Controller
             }*/
 
             if (($value = $this->getFilter($filter->getName())) !== null) {
-                if ($value == 'null') {
+                if ($value === 'null') {
                     $value = null;
                 }
 
@@ -102,9 +101,12 @@ abstract class AbstractResource extends Controller
         return $queryBuilder;
     }
 
-    public function done(Result $result, $statusCode = 200, $headers = [])
+    public function done(Response $response, $statusCode = HttpResponse::HTTP_OK, $headers = [])
     {
-        return new JsonResponse($result, $statusCode, $headers);
+        $headers = array_merge(['content-type' => 'application/json'], $headers);
+        $json = $response->toJson($this);
+
+        return new HttpResponse($json, $statusCode, $headers);
     }
 
 
@@ -125,6 +127,15 @@ abstract class AbstractResource extends Controller
     public function getContext()
     {
         return $this->context;
+    }
+
+    public function getCurrentActionUri()
+    {
+        if (($action = $this->getDefinition()->findAction($this->actionType)) !== null) {
+            return $this->urlService->route($action->getRouteName());
+        }
+
+        return null;
     }
 
     public function getFilter($name)
@@ -190,24 +201,21 @@ abstract class AbstractResource extends Controller
 
     public function createInstanceHref($instance)
     {
-        $action = $this->getDefinition()->findAction(ActionDefinition::TYPE_INSTANCE);
-
-        if ($action === null) {
-            return null;
+        if (($action = $this->getDefinition()->findAction(ActionDefinition::TYPE_INSTANCE)) !== null) {
+            return $this->urlService->route($action->getRouteName(), ['id' => 1]);
         }
 
-        return $this->urlService->route($action->getRouteName(), ['id' => 1]);
+        return null;
     }
 
     /**
      * Gets the current user.
      *
-     * @return Symfony\Component\Security\Core\User\AdvancedUserInterface
+     * @return \App\User|null
      */
     public function getUser()
     {
-        throw new \Exception("Not implemented");
-        return $this->getService('security.context')->getUser();
+        return $this->getContext()->getRequest()->user();
     }
 
     public function validate()
@@ -227,7 +235,7 @@ abstract class AbstractResource extends Controller
             $validator = Validator::make($this->getContext()->getRequest()->all(), $rules);
 
             if ($validator->fails() === true) {
-
+                die('xerg');
             }
         }
     }

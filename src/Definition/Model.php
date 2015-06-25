@@ -1,6 +1,8 @@
 <?php
 namespace Rested\Definition;
 
+use Nocarrier\Hal;
+
 /**
  * Maps an external representation of a resource to an actual object.
  *
@@ -79,6 +81,8 @@ class Model
      */
     public function apply($locale, array $data, $obj = null)
     {
+        $user = $this->resourceDefinition->getResource()->getUser();
+
         if ($obj === null) {
             $class = $this->getDefiningClass();
             $obj = new $class();
@@ -91,6 +95,11 @@ class Model
         // TODO: should we throw an exception when data is supplied for a field that cannot be set?
         foreach ($data as $key => $value) {
             if (($field = $this->findField($key)) !== null) {
+                // do they have permission to set this field?
+                if ($user->isGranted($def->getRoleNames('set')) == false) {
+                    continue;
+                }
+
                 if ($field->isModel() === true) {
                     $setter = $field->getSetter();
                     $obj->$setter($value);
@@ -121,6 +130,14 @@ class Model
     }
 
     /**
+     * @return \Rested\Definition\ResourceDefinition
+     */
+    public function getDefinition()
+    {
+        return $this->resourceDefinition;
+    }
+
+    /**
      * Adds a new field to the mapping.
      *
      * @param string $name
@@ -140,7 +157,7 @@ class Model
      */
     public function setField($name, $type, $getter, $setter, $description, array $validationParameters = null)
     {
-        $this->add($name, $getter, $setter, $description, $type, $validationParameters);
+        $this->add($name, $type, $getter, $setter, $description, $validationParameters);
 
         return $this;
     }
@@ -148,13 +165,14 @@ class Model
     public function export($instance, $expand = true, $forceAllFields = false)
     {
         $e = [];
-        $context = $this->resourceDefinition->getResource()->getContext();
+        $href = '';
+        $resource = $this->resourceDefinition->getResource();
+        $context = $resource->getContext();
+        $user = $resource->getUser();
 
         // add href if we have a context
         if ($context !== null) {
-            if (($href = $context->getResource()->createInstanceHref($instance)) !== null) {
-                $e['href'] = $href;
-            }
+            $href = $context->getResource()->createInstanceHref($instance);
         }
 
         if ($expand == true) {
@@ -164,10 +182,9 @@ class Model
                 // a null context means all fields except expansions
                 if (($context === null) || ($forceAllFields == true) || ($context->wantsField($def->getName()) == true)) {
                     // do they have permission to get this field?
-                    // @todo: security
-                    /*if ($app['security']->isGranted($def->getRequiredPermission()) == false) {
+                    if ($user->isGranted($def->getRoleNames('get')) == false) {
                         continue;
-                    }*/
+                    }
 
                     $callable = $def->getGetter();
 
@@ -184,7 +201,7 @@ class Model
             }
         }
 
-        return $e;
+        return new Hal($href, $e);
     }
 
     public function exportAll($expand = true)

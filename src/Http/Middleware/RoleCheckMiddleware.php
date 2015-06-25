@@ -17,10 +17,21 @@ class RoleCheckMiddleware
     public function handle($request, Closure $next)
     {
         $action = $request->route()->getAction();
-        $role = array_key_exists('role', $action) ? $action['role'] : null;
+        $roles = array_key_exists('roles', $action) ? $action['roles'] : null;
 
-        if (($role !== null) && ($this->authorizationChecker->isGranted($role) === false)) {
-            abort(401);
+        if ($roles !== null) {
+            $hasAccess = false;
+
+            foreach ($roles as $role) {
+                if ($this->authorizationChecker->isGranted($role) === true) {
+                    $hasAccess = true;
+                    break;
+                }
+            }
+
+            if ($hasAccess === false) {
+                abort(401);
+            }
         }
 
         return $next($request);
