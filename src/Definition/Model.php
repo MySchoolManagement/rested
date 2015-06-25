@@ -20,7 +20,7 @@ namespace Rested\Definition;
  * "description": "a super description"
  * }
  */
-class InstanceDefinition
+class Model
 {
 
     private $class;
@@ -51,8 +51,6 @@ class InstanceDefinition
      *            Method to call on the resource to get the value.
      * @param callable $setter
      *            When applying a model, can this field be changed?
-     * @param boolean $isRequired
-     *            If this field has a setter, is it required when modifying this resource?
      * @param string $description
      *            Description of this field.
      * @param array $validationParameters
@@ -60,9 +58,9 @@ class InstanceDefinition
      *
      * @return \Rested\Definition\InstanceDefinition Self
      */
-    public function add($name, $type, $getter, $setter, $isRequired, $description, array $validationParameters = null)
+    public function add($name, $type, $getter, $setter, $description, array $validationParameters = null)
     {
-        $this->fields[] = new Field($this, $name, $getter, $setter, $isRequired, $description, $type, $validationParameters);
+        $this->fields[] = new Field($this, $name, $getter, $setter, $description, $type, $validationParameters);
 
         return $this;
     }
@@ -103,6 +101,50 @@ class InstanceDefinition
         return $obj;
     }
 
+    public function findField($name)
+    {
+        foreach ($this->fields as $field) {
+            if (strcasecmp($name, $field->getName()) === 0) {
+                return $field;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return \Rested\Definition\Field[]
+     */
+    public function getFields()
+    {
+        return $this->fields;
+    }
+
+    /**
+     * Adds a new field to the mapping.
+     *
+     * @param string $name
+     *            The name of field. Used in the representation sent to the client.
+     * @param string $type
+     *            The data type of the field.
+     * @param callable $getter
+     *            Method to call on the resource to get the value.
+     * @param callable $setter
+     *            When applying a model, can this field be changed?
+     * @param string $description
+     *            Description of this field.
+     * @param array $validationParameters
+     *            List of validation settings.  These are symfony form settings.
+     *
+     * @return \Rested\Definition\InstanceDefinition Self
+     */
+    public function setField($name, $type, $getter, $setter, $description, array $validationParameters = null)
+    {
+        $this->add($name, $getter, $setter, $description, $type, $validationParameters);
+
+        return $this;
+    }
+
     public function export($instance, $expand = true, $forceAllFields = false)
     {
         $e = [];
@@ -116,7 +158,9 @@ class InstanceDefinition
         }
 
         if ($expand == true) {
-            foreach ($this->getFields() as $def) {
+            $fields = $this->getFields();
+
+            foreach ($fields as $def) {
                 // a null context means all fields except expansions
                 if (($context === null) || ($forceAllFields == true) || ($context->wantsField($def->getName()) == true)) {
                     // do they have permission to get this field?
@@ -170,29 +214,13 @@ class InstanceDefinition
         return $return;
     }
 
-    public function findField($name)
-    {
-        foreach ($this->fields as $field) {
-            if (strcasecmp($name, $field->getName()) === 0) {
-                return $field;
-            }
-        }
-
-        return null;
-    }
-
     public function getDefiningClass()
     {
         return $this->class;
     }
 
-    public function getFields()
-    {
-        return $this->fields;
-    }
-
     public static function create(ResourceDefinition $resourceDefinition, $class)
     {
-        return new InstanceDefinition($resourceDefinition, $class);
+        return new Model($resourceDefinition, $class);
     }
 }

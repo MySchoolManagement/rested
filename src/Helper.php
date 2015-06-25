@@ -11,6 +11,30 @@ class Helper
         }
     }
 
+    public static function makeRoleName()
+    {
+        $parts = func_get_args();
+        array_unshift($parts, 'ROLE_RESTED');
+
+        return mb_strtoupper(self::makeSlugFromArray($parts, ['delimiter' => '_']));
+    }
+
+    public static function makeRouteName()
+    {
+        $parts = func_get_args();
+        array_unshift($parts, 'rested');
+
+        return self::makeSlugFromArray($parts, ['delimiter' => '_']);
+    }
+
+    public static function makeSlugFromArray(array $arr = [], array $options = [])
+    {
+        $delimiter = array_key_exists('delimiter', $options) ? $options['delimiter'] : '-';
+        $str = join($delimiter, $arr);
+
+        return self::makeSlug($str, $options);
+    }
+
     /**
      * Create a web friendly URL slug from a string.
      *
@@ -26,7 +50,8 @@ class Helper
      * @param array $options
      * @return string
      */
-    public static function makeSlug($str, $options = []) {
+    public static function makeSlug($str, $options = [])
+    {
         // Make sure string is in UTF-8 and strip invalid UTF-8 characters
         $str = mb_convert_encoding((string)$str, 'UTF-8', mb_list_encodings());
 

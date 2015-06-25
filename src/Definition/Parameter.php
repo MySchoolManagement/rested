@@ -6,6 +6,7 @@ class Parameter
 
     const TYPE_ARRAY = 'array';
     const TYPE_DATE = 'date';
+    const TYPE_DATETIME = 'datetime';
     const TYPE_INT = 'int';
     const TYPE_SLASH = 'slash';
     const TYPE_STRING = 'string';

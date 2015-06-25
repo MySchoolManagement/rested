@@ -7,22 +7,20 @@ class Field
     private $getter;
     private $setter;
     private $description;
-    private $instanceDefinition;
+    private $model;
     private $name;
     private $requiredPermission;
     private $type;
-    private $isRequired;
     private $validationParameters;
 
-    public function __construct(InstanceDefinition $instanceDefinition, $name, $getter, $setter, $isRequired, $description, $type, array $validationParameters = null)
+    public function __construct(Model $model, $name, $getter, $setter, $description, $type, $validationParameters = null)
     {
         $this->getter = $getter;
         $this->setter = $setter;
         $this->description = $description;
-        $this->instanceDefinition = $instanceDefinition;
+        $this->model = $model;
         $this->name = $name;
         $this->type = $type;
-        $this->isRequired = $isRequired;
         $this->validationParameters = $validationParameters;
     }
 
@@ -56,7 +54,7 @@ class Field
      */
     public function getInstanceDefinition()
     {
-        return $this->instanceDefinition;
+        return $this->model->getInstanceDefinition();
     }
 
     public function getName()
@@ -93,15 +91,5 @@ class Field
     public function isModel()
     {
         return ($this->getSetter() !== null);
-    }
-
-    /**
-     * When this field is part of the model, must a value be provided?
-     *
-     *  @return boolean
-     */
-    public function isRequired()
-    {
-        return $this->isRequired;
     }
 }

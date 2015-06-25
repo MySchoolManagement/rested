@@ -3,6 +3,7 @@ namespace Rested\Resources;
 
 use Illuminate\Routing\Router;
 use Rested\AbstractResource;
+use Rested\Definition\Model;
 use Rested\Definition\Parameter;
 use Rested\Definition\ResourceDefinition;
 use Rested\Result;
@@ -17,17 +18,17 @@ class EntrypointResource extends AbstractResource
                 ->setSummary('Entrypoint in to the RESTful system')
             ;
 
-        $def->addCollectionAction('collection');
+        $model = $def->addModel(ResourceDefinition::class)
+            ->setField('actions', Parameter::TYPE_ARRAY,  null, null, 'A controller can contain multiple actions (create, update, read, delete), these are the definitions.')
+            ->setField('description', Parameter::TYPE_STRING, 'getDescription', null, 'Description of the endpoint.')
+            ->setField('mapping', Parameter::TYPE_ARRAY,  null, null, 'Holds information on how fields are mapped to backend values.')
+            ->setField('name', Parameter::TYPE_STRING, 'getName', null, 'Name of the module.')
+            ->setField('provider_name', Parameter::TYPE_STRING, null, null, 'Name of the provider that exposes this endpoint.')
+            ->setField('provider_tag', Parameter::TYPE_STRING, null, null, 'Tag of the provider that exposes this endpoint.')
+            ->setField('summary', Parameter::TYPE_STRING, 'getSummary', null, 'Summary of the endpoint\'s purpose.')
+        ;
 
-        $def->addInstanceDefinition(ResourceDefinition::class)
-                ->add('actions',       Parameter::TYPE_ARRAY,  null,             null, false, 'A controller can contain multiple actions (create, update, read, delete), these are the definitions.')
-                ->add('description',   Parameter::TYPE_STRING, 'getDescription', null, false, 'Description of the endpoint.')
-                ->add('mapping',       Parameter::TYPE_ARRAY,  null,             null, false, 'Holds information on how fields are mapped to backend values.')
-                ->add('name',          Parameter::TYPE_STRING, 'getName',        null, false, 'Name of the module.')
-                ->add('provider_name', Parameter::TYPE_STRING, null,             null, false, 'Name of the provider that exposes this endpoint.')
-                ->add('provider_tag',  Parameter::TYPE_STRING, null,             null, false, 'Tag of the provider that exposes this endpoint.')
-                ->add('summary',       Parameter::TYPE_STRING, 'getSummary',     null, false, 'Summary of the endpoint\'s purpose.')
-            ;
+        $def->addCollectionAction('collection');
 
         return $def;
     }

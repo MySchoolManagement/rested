@@ -104,6 +104,14 @@ class RequestContext
         return $p;
     }
 
+    /**
+     * @return Illuminate\Http\Request
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
+
     public function getResource()
     {
         return $this->resource;

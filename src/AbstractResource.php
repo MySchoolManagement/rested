@@ -4,6 +4,7 @@ namespace Rested;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Validator;
 use Rested\Definition\ActionDefinition;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -16,12 +17,17 @@ abstract class AbstractResource extends Controller
 
     private $exportMapping;
 
+    private $actionType;
+
     public function __construct(Router $router = null)
     {
         // if we're in the request scope then create a context
         if (($router !== null) && (($route = $router->getCurrentRoute()) !== null)) {
+            $action = $route->getAction();
+
             $this->context = new RequestContext($router->getCurrentRequest(), $this);
             $this->urlService = app('url');
+            $this->actionType = $action['rested_type'];
         }
     }
 
@@ -104,15 +110,18 @@ abstract class AbstractResource extends Controller
 
     public function export($instance)
     {
-        $instanceDef = $this->getDefinition()->getInstanceDefinition();
+        $model = $this->getDefinition()->getModel();
 
-        if ($instanceDef === null) {
+        if ($model === null) {
             return null;
         }
 
-        return $instanceDef->export($instance);
+        return $model->export($instance);
     }
 
+    /**
+     * @return \Rested\RequestContext
+     */
     public function getContext()
     {
         return $this->context;
@@ -163,32 +172,6 @@ abstract class AbstractResource extends Controller
             ;
     }
 
-    /***
-     * Gets the mapping model used specifically for create operations.
-     */
-    public function getCreateModel()
-    {
-        return $this->getModel();
-    }
-
-    /***
-     * Gets the mapping model used specifically for update operations.
-     */
-    public function getUpdateModel()
-    {
-        return $this->getModel();
-    }
-
-    /**
-     * Gets the mapping model to use for update/create/delete operations.
-     *
-     * @return Mapping
-     */
-    public function getModel()
-    {
-        return $this->getExportMapping();
-    }
-
     public function getOffset()
     {
         return $this
@@ -225,6 +208,28 @@ abstract class AbstractResource extends Controller
     {
         throw new \Exception("Not implemented");
         return $this->getService('security.context')->getUser();
+    }
+
+    public function validate()
+    {
+        $action = $this->getDefinition()->findAction($this->actionType);
+
+        if ($action !== null) {
+            $model = $action->getModel();
+            $rules = [];
+
+            foreach ($model->getFields() as $field) {
+                if ($field->isModel() === true) {
+                    $rules[$field->getName()] = $field->getValidationParameters();
+                }
+            }
+
+            $validator = Validator::make($this->getContext()->getRequest()->all(), $rules);
+
+            if ($validator->fails() === true) {
+
+            }
+        }
     }
 
     public function wantsExpansion($name)

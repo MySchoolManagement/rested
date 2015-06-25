@@ -17,7 +17,7 @@ class ResourceDefinition
 
     private $endpoint;
 
-    private $instanceDefinition = null;
+    private $model = null;
 
     private $name;
 
@@ -43,6 +43,17 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
+    public function addCreateAction($callable, Model $modelOverride = null)
+    {
+        $action = $this->addAction(ActionDefinition::TYPE_CREATE, $callable);
+        $action->setModelOverride($modelOverride);
+
+        return $action;
+    }
+
+    /**
+     * @return \Rested\Definition\ActionDefinition
+     */
     public function addInstanceAction($callable, $type = Parameter::TYPE_UUID)
     {
         $action = $this->addAction(ActionDefinition::TYPE_INSTANCE, $callable);
@@ -52,16 +63,16 @@ class ResourceDefinition
     }
 
     /**
-     * @return \Rested\Definition\InstanceDefinition
+     * @return \Rested\Definition\Model
      * @throws \Exception
      */
-    public function addInstanceDefinition($class)
+    public function addModel($class)
     {
-        if ($this->instanceDefinition !== null) {
-            throw new \Exception('There is already an instance definition attached');
+        if ($this->model !== null) {
+            throw new \Exception('There is already a model attached');
         }
 
-        return ($this->instanceDefinition = InstanceDefinition::create($this, $class));
+        return ($this->model = Model::create($this, $class));
     }
 
     /**
@@ -101,9 +112,9 @@ class ResourceDefinition
         return $this->endpoint;
     }
 
-    public function getInstanceDefinition()
+    public function getModel()
     {
-        return $this->instanceDefinition;
+        return $this->model;
     }
 
     public function getName()

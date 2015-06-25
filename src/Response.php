@@ -3,7 +3,7 @@ namespace Rested;
 
 use Symfony\Component\Form\FormInterface;
 
-class Result
+class Response
 {
 
     /**

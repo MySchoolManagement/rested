@@ -3,6 +3,7 @@ namespace Rested;
 
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Rested\Http\Middleware\RoleCheckMiddleware;
 
 class RestedServiceProvider extends ServiceProvider
 {
@@ -22,9 +23,11 @@ class RestedServiceProvider extends ServiceProvider
             self::CONFIG_FILE => config_path('rested.php'),
         ]);
 
-        $this->router = $this->app->make('router');
+        $app = $this->app;
 
-        $this->app->instance('Rested\RestedServiceProvider', $this);
+        $this->router = $app->make('router');
+
+        $this->router->middleware('role_check', 'middleware.role_check');
 
         if ($this->app->routesAreCached() === false) {
             // add some core resources
@@ -45,6 +48,22 @@ class RestedServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(self::CONFIG_FILE, 'rested');
+
+        $app = $this->app;
+
+        $app['rested'] = $app->instance('Rested\RestedServiceProvider', $this);
+
+        $app['middleware.role_check'] = $app->share(function($app) {
+            return new RoleCheckMiddleware($app['security.authorization_checker']);
+        });
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function provides()
+    {
+        return ['rested', 'middleware.role_check'];
     }
 
     public function addResource($class)
@@ -76,8 +95,15 @@ class RestedServiceProvider extends ServiceProvider
             }
 
             $routeName = $action->getRouteName();
+            $roleName = $action->getRoleName();
             $callable = sprintf('%s@%s', $class, $action->getCallable());
-            $route = $router->{$action->getVerb()}($href, ['as' => $routeName, 'uses' => $callable]);
+            $route = $router->{$action->getVerb()}($href, [
+                'as' => $routeName,
+                //'middleware' => 'role_check',
+                'rested_type' => $action->getType(),
+                'role' => $roleName,
+                'uses' => $callable,
+            ]);
 
 
             // @todo: permissions

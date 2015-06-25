@@ -10,15 +10,20 @@ class ActionDefinition
 {
 
     const TYPE_COLLECTION = 'collection';
+    const TYPE_CREATE = 'create';
     const TYPE_INSTANCE = 'instance';
 
     private $definition;
+
+    private $cacheRoleName;
+
+    private $cacheRouteName;
 
     private $callable;
 
     private $description;
 
-    private $requiredPermission;
+    private $modelOverride;
 
     private $summary;
 
@@ -104,28 +109,45 @@ class ActionDefinition
         return $this->inputs;
     }
 
+    /**
+     * @return \Rested\Definition\Model
+     */
+    public function getModel()
+    {
+        if ($this->modelOverride !== null) {
+            return $this->modelOverride;
+        }
+
+        return $this->getDefinition()->getInstanceDefinition();
+    }
+
     public function getName()
     {
         return $this->name;
     }
 
-    public function getRequiredPermission()
+    public function getRoleName()
     {
-        if ($this->requiredPermission !== null) {
-            return $this->requiredPermission;
+        if ($this->cacheRoleName !== null) {
+            return $this->cacheRoleName;
         }
 
-        // @TODO: $this->requiredPermission = sprintf('ROLE_API_%s_%s_%s', Util::formatPermissionString($this->definition->getInitialContext()->getTag()), Util::formatPermissionString($this->definition->getName()), Util::formatPermissionString($this->getName()));
+        $endpoint = $this->getDefinition()->getEndpoint();
+        $type = $this->getTypeName();
 
-        return $this->requiredPermission;
+        return ($this->cacheRoleName = Helper::makeRoleName($endpoint, $type));
     }
 
     public function getRouteName()
     {
-        $slug = Helper::makeSlug($this->getDefinition()->getEndpoint(), ['delimiter' => '_']);
+        if ($this->cacheRouteName !== null) {
+            return $this->cacheRouteName;
+        }
+
+        $endpoint = $this->getDefinition()->getEndpoint();
         $type = $this->getTypeName();
 
-        return sprintf('rested_%s_%s', $slug, $type);
+        return ($this->cacheRouteName = Helper::makeRouteName($endpoint, $type));
     }
 
     public function getSummary()
@@ -146,11 +168,14 @@ class ActionDefinition
     public function getTypeName()
     {
         switch ($this->getType()) {
-            case self::TYPE_INSTANCE:
-                return 'instance';
-
             case self::TYPE_COLLECTION:
                 return 'collection';
+
+            case self::TYPE_CREATE:
+                return 'create';
+
+            case self::TYPE_INSTANCE:
+                return 'instance';
         }
 
         return 'unknown';
@@ -173,7 +198,11 @@ class ActionDefinition
     {
         switch ($this->type) {
             case ActionDefinition::TYPE_COLLECTION:
+            case ActionDefinition::TYPE_INSTANCE:
                 return 'get';
+
+            case ActionDefinition::TYPE_CREATE:
+                return 'post';
         }
 
         return 'get';
@@ -187,18 +216,13 @@ class ActionDefinition
     }
 
     /**
-     * Sets the input fields to match the given mapping.
-     *
-     * @param Mapping $mapping
+     * @param \Rested\Definition\Model $model
+     * @return $this
      */
-    public function setModelMapping(Mapping $mapping)
+    public function setModelOverride(Model $model = null)
     {
-        foreach ($mapping->getFields() as $field) {
-            if ($field->isModel() == true) {
-                $this->addInput($field->getName(), $field->getType(), null, $field->isRequired(), $field->getDescription());
-            }
-        }
-        
+        $this->modelOverride = $model;
+
         return $this;
     }
 
