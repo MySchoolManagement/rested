@@ -1,6 +1,7 @@
 <?php
 namespace Rested\Definition;
 
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Nocarrier\Hal;
 
 /**
@@ -81,7 +82,8 @@ class Model
      */
     public function apply($locale, array $data, $obj = null)
     {
-        $user = $this->resourceDefinition->getResource()->getUser();
+        $definition = $this->resourceDefinition;
+        $user = $definition->getResource()->getUser();
 
         if ($obj === null) {
             $class = $this->getDefiningClass();
@@ -92,17 +94,24 @@ class Model
             $obj->setLocale($locale);
         }
 
+        $isEloquent = $obj instanceof EloquentModel;
+
         // TODO: should we throw an exception when data is supplied for a field that cannot be set?
         foreach ($data as $key => $value) {
             if (($field = $this->findField($key)) !== null) {
                 // do they have permission to set this field?
-                if ($user->isGranted($def->getRoleNames('set')) == false) {
+                if ($user->isGranted($field->getRoleNames('set')) == false) {
                     continue;
                 }
 
                 if ($field->isModel() === true) {
                     $setter = $field->getSetter();
-                    $obj->$setter($value);
+
+                    if ($isEloquent === true) {
+                        $obj->setAttribute($setter, $value);
+                    } else {
+                        $obj->{$setter}($value);
+                    }
                 }
             }
         }
@@ -177,6 +186,7 @@ class Model
 
         if ($expand == true) {
             $fields = $this->getFields();
+            $isEloquent = $instance instanceof EloquentModel;
 
             foreach ($fields as $def) {
                 // a null context means all fields except expansions
@@ -192,7 +202,11 @@ class Model
                         if (is_array($callable) == true) {
                             $val = call_user_func($callable, $instance);
                         } else {
-                            $val = $instance->$callable();
+                            if ($isEloquent === true) {
+                                $val = $instance->getAttribute($callable);
+                            } else {
+                                $val = $instance->$callable();
+                            }
                         }
 
                         $e[$def->getName()] = $this->exportValue($val);

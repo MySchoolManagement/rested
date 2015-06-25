@@ -26,10 +26,15 @@ abstract class AbstractResource extends Controller
         // if we're in the request scope then create a context
         if (($router !== null) && (($route = $router->getCurrentRoute()) !== null)) {
             $action = $route->getAction();
+            $request = $router->getCurrentRequest();
 
-            $this->context = new RequestContext($router->getCurrentRequest(), $this);
+            $this->context = new RequestContext($request, $this);
             $this->urlService = app('url'); // FIXME: use DI
             $this->actionType = $action['rested_type'];
+
+            if (in_array($request->getMethod(), ['PATCH', 'POST', 'PUT']) === true) {
+                $this->validate();
+            }
         }
     }
 
@@ -134,6 +139,15 @@ abstract class AbstractResource extends Controller
         return null;
     }
 
+    public function getCurrentModel()
+    {
+        if (($action = $this->getDefinition()->findAction($this->actionType)) !== null) {
+            return $action->getModel();
+        }
+
+        return null;
+    }
+
     public function getFilter($name)
     {
         return $this
@@ -216,10 +230,9 @@ abstract class AbstractResource extends Controller
 
     public function validate()
     {
-        $action = $this->getDefinition()->findAction($this->actionType);
+        $model = $this->getCurrentModel();
 
-        if ($action !== null) {
-            $model = $action->getModel();
+        if ($model !== null) {
             $request = $this->getContext()->getRequest();
             $rules = [];
 
