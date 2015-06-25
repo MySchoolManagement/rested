@@ -8,8 +8,6 @@ use Rested\Http\Middleware\RoleCheckMiddleware;
 class RestedServiceProvider extends ServiceProvider
 {
 
-    const CONFIG_FILE = __DIR__ . '/../config/rested.php';
-
     private $router;
 
     private $resourcesFromServices = [];
@@ -20,7 +18,7 @@ class RestedServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            self::CONFIG_FILE => config_path('rested.php'),
+            __DIR__ . '/../config/rested.php' => config_path('rested.php'),
         ]);
 
         $app = $this->app;
@@ -47,7 +45,7 @@ class RestedServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(self::CONFIG_FILE, 'rested');
+        $this->mergeConfigFrom(__DIR__ . '/../config/rested.php', 'rested');
 
         $app = $this->app;
 
