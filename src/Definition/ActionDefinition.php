@@ -118,7 +118,7 @@ class ActionDefinition
             return $this->modelOverride;
         }
 
-        return $this->getDefinition()->getInstanceDefinition();
+        return $this->getDefinition()->getModel();
     }
 
     public function getName()

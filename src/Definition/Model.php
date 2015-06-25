@@ -60,7 +60,7 @@ class Model
      *
      * @return \Rested\Definition\InstanceDefinition Self
      */
-    public function add($name, $type, $getter, $setter, $description, array $validationParameters = null)
+    public function add($name, $type, $getter, $setter, $description, $validationParameters = null)
     {
         $this->fields[] = new Field($this, $name, $getter, $setter, $description, $type, $validationParameters);
 
@@ -155,7 +155,7 @@ class Model
      *
      * @return \Rested\Definition\InstanceDefinition Self
      */
-    public function setField($name, $type, $getter, $setter, $description, array $validationParameters = null)
+    public function setField($name, $type, $getter, $setter, $description, $validationParameters = null)
     {
         $this->add($name, $type, $getter, $setter, $description, $validationParameters);
 

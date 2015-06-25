@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 abstract class AbstractResource extends Controller
 {
@@ -41,17 +42,12 @@ abstract class AbstractResource extends Controller
      * @param string $message Message to pass to the client.
      * @param integer $statusCode HTTP status code.
      */
-    public function abort($message, $statusCode)
+    public function abort($statusCode, $attributes)
     {
-        throw new \Exception("NOT IMPLEMENTED");
-        switch ($statusCode) {
-            case 400: throw new BadRequestHttpException($message);
-            case 401: throw new UnauthorizedHttpException(rand(), $message);
-            case 404: throw new NotFoundHttpException($message);
-            case 409: throw new ConflictHttpException($message);
-        }
+        $response = new Hal($this->getCurrentActionUri());
+        $response->setData($attributes);
 
-        throw new \Exception('Unknown status code, perhaps this needs to be added to abort()');
+        throw new HttpException($statusCode, $response->asJson(), null, ['content-type' => 'application/json']);
     }
 
     public function allowPrettyInterface()
@@ -224,6 +220,7 @@ abstract class AbstractResource extends Controller
 
         if ($action !== null) {
             $model = $action->getModel();
+            $request = $this->getContext()->getRequest();
             $rules = [];
 
             foreach ($model->getFields() as $field) {
@@ -232,10 +229,24 @@ abstract class AbstractResource extends Controller
                 }
             }
 
-            $validator = Validator::make($this->getContext()->getRequest()->all(), $rules);
+            $validator = Validator::make($request->json()->all(), $rules);
 
             if ($validator->fails() === true) {
-                die('xerg');
+                $failed = $validator->failed();
+                $messages = $validator->messages();;
+                $responseMessages = [];
+
+                foreach ($failed as $field => $rules) {
+                    $responseMessages[$field] = [];
+
+                    foreach ($rules as $rule => $parameters) {
+                        $responseMessages[$field][$rule] = $messages->first($field);
+                    }
+                }
+
+                $this->abort(422, [
+                    'validation_messages' => $responseMessages
+                ]);
             }
         }
     }
