@@ -13,6 +13,7 @@ class ActionDefinition
     const TYPE_CREATE = 'create';
     const TYPE_DELETE = 'delete';
     const TYPE_INSTANCE = 'instance';
+    const TYPE_UPDATE = 'update';
 
     private $definition;
 
@@ -183,6 +184,9 @@ class ActionDefinition
 
             case self::TYPE_INSTANCE:
                 return 'instance';
+
+            case self::TYPE_UPDATE:
+                return 'update';
         }
 
         return 'unknown';
@@ -213,6 +217,9 @@ class ActionDefinition
 
             case ActionDefinition::TYPE_DELETE:
                 return 'delete';
+
+            case ActionDefinition::TYPE_UPDATE:
+                return 'put';
         }
 
         return 'get';

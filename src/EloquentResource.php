@@ -167,12 +167,12 @@ abstract class EloquentResource extends AbstractResource
         $instance = $this->findInstance($id);
 
         if ($instance === null) {
-            $this->abort(404);
+            $this->abort(HttpResponse::HTTP_NOT_FOUND);
         }
 
         $instance->delete();
 
-        return $this->done(null, 204);
+        return $this->done(null, HttpResponse::HTTP_NO_CONTENT);
     }
 
     public function instance(Request $request, $id)
@@ -180,7 +180,7 @@ abstract class EloquentResource extends AbstractResource
         $instance = $this->findInstance($id);
 
         if ($instance === null) {
-            $this->abort(404);
+            $this->abort(HttpResponse::HTTP_NOT_FOUND);
         }
 
         $item = $this->export($instance);
@@ -189,38 +189,31 @@ abstract class EloquentResource extends AbstractResource
         return $this->done($response);
     }
 
-    public function handleUpdate(Request $request, $id)
+    public function update(Request $request, $id)
     {
-        // TODO: permissions
+        $instance = $this->findInstance($id);
 
-        $form = $this->createForm($this->getContentFormType($this->getUpdateModel()), null, ['method' => 'PUT']);
-        $form->handleRequest($request);
-
-        $result = new Result();
-        $result->addForm($form);
-        $statusCode = 200;
-
-        if (($instance = $this->findInstance($id)) === null) {
-            $this->abort(404);
-        } else {
-            $result->data = $instance->exportAll($this->getContext());
-
-            if ($form->isValid() == true) {
-                $con = \Propel::getConnection();
-                $con->beginTransaction();
-                {
-                    $this->updateInstance($instance, $form);
-                    $this->onUpdated($result, $form, $instance);
-                }
-                $con->commit();
-
-                $result->data = $instance->exportAll($this->getContext());
-            } else {
-                $statusCode = 400;
-            }
+        if ($instance === null) {
+            $this->abort(HttpResponse::HTTP_NOT_FOUND);
         }
 
-        return $this->done($result, $statusCode);
+        $data = $request->json()->all();
+
+        $closure = function() use ($data, $instance) {
+            $this->updateInstance($instance, $data);
+            $this->onUpdated($instance);
+        };
+
+        if ($this->useTransaction() === true) {
+            $this->databaseManager->transaction($closure);
+        } else {
+            $closure();
+        }
+
+        $item = $this->exportAll($instance);
+        $response = Response::createInstance($item);
+
+        return $this->done($response, HttpResponse::HTTP_OK);
     }
 
     /**
@@ -295,10 +288,8 @@ abstract class EloquentResource extends AbstractResource
      */
     protected function updateInstance($instance, array $data)
     {
-        $this
-            ->getCurrentModel()
-            ->apply($this->getRequest()->getLocale(), $data, $instance)
-            ->save();
+        $instance = $this->getCurrentModel()->apply('en', $data, $instance);
+        $instance->save();
 
         return $instance;
     }

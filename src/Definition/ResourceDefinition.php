@@ -95,6 +95,17 @@ class ResourceDefinition
     }
 
     /**
+     * @return \Rested\Definition\ActionDefinition
+     */
+    public function addUpdateAction($callable, $type = Parameter::TYPE_UUID)
+    {
+        $action = $this->addAction(ActionDefinition::TYPE_UPDATE, $callable);
+        $action->addToken('id', $type);
+
+        return $action;
+    }
+
+    /**
      * @return \Rested\Definition\ActionDefinition|null
      */
     public function findAction($type)
