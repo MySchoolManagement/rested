@@ -49,14 +49,14 @@ abstract class AbstractResource extends Controller
      * @param string $message Message to pass to the client.
      * @param integer $statusCode HTTP status code.
      */
-    public function abort($statusCode, $attributes)
+    public function abort($statusCode, $attributes = [])
     {
         $response = new Hal($this->getCurrentActionUri());
         $response->setData($attributes);
 
         switch ($statusCode) {
             case 404:
-                throw new NotFoundHttpException($response->asJson());
+                throw new NotFoundHttpException();
             case 409:
                 throw new ConflictHttpException($response->asJson());
 
