@@ -162,7 +162,20 @@ abstract class EloquentResource extends AbstractResource
         return $queryBuilder;
     }
 
-    public function instance(Request $request, $id = null)
+    public function delete(Request $request, $id)
+    {
+        $instance = $this->findInstance($id);
+
+        if ($instance === null) {
+            $this->abort(404);
+        }
+
+        $instance->delete();
+
+        return $this->done(null, 204);
+    }
+
+    public function instance(Request $request, $id)
     {
         $instance = $this->findInstance($id);
 

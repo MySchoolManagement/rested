@@ -54,6 +54,17 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
+    public function addDeleteAction($callable, $type = Parameter::TYPE_UUID)
+    {
+        $action = $this->addAction(ActionDefinition::TYPE_DELETE, $callable);
+        $action->addToken('id', $type);
+
+        return $action;
+    }
+
+    /**
+     * @return \Rested\Definition\ActionDefinition
+     */
     public function addInstanceAction($callable, $type = Parameter::TYPE_UUID)
     {
         $action = $this->addAction(ActionDefinition::TYPE_INSTANCE, $callable);

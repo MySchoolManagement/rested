@@ -11,6 +11,7 @@ class ActionDefinition
 
     const TYPE_COLLECTION = 'collection';
     const TYPE_CREATE = 'create';
+    const TYPE_DELETE = 'delete';
     const TYPE_INSTANCE = 'instance';
 
     private $definition;
@@ -177,6 +178,9 @@ class ActionDefinition
             case self::TYPE_CREATE:
                 return 'create';
 
+            case self::TYPE_DELETE:
+                return 'delete';
+
             case self::TYPE_INSTANCE:
                 return 'instance';
         }
@@ -206,6 +210,9 @@ class ActionDefinition
 
             case ActionDefinition::TYPE_CREATE:
                 return 'post';
+
+            case ActionDefinition::TYPE_DELETE:
+                return 'delete';
         }
 
         return 'get';
