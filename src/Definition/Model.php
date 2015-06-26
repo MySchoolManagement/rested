@@ -30,6 +30,8 @@ class Model
 
     private $fields = [];
 
+    private $primaryKeyField = 'uuid';
+
     private $resourceDefinition;
 
     /**
@@ -146,6 +148,15 @@ class Model
         return $this->resourceDefinition;
     }
 
+    public function getPrimaryKeyValueForInstance($instance)
+    {
+        if (($field = $this->findField($this->primaryKeyField)) !== null) {
+            return $instance->{$field->getGetter()}();
+        }
+
+        return null;
+    }
+
     /**
      * Adds a new field to the mapping.
      *
@@ -184,13 +195,13 @@ class Model
             $href = $context->getResource()->createInstanceHref($instance);
         }
 
-        if ($expand == true) {
+        if ($expand === true) {
             $fields = $this->getFields();
             $isEloquent = $instance instanceof EloquentModel;
 
             foreach ($fields as $def) {
                 // a null context means all fields except expansions
-                if (($context === null) || ($forceAllFields == true) || ($context->wantsField($def->getName()) == true)) {
+                if (($context === null) || ($forceAllFields === true) || ($context->wantsField($def->getName()) === true)) {
                     // do they have permission to get this field?
                     if ($user->isGranted($def->getRoleNames('get')) == false) {
                         continue;
@@ -199,7 +210,7 @@ class Model
                     $callable = $def->getGetter();
 
                     if ($callable !== null) {
-                        if (is_array($callable) == true) {
+                        if (is_array($callable) === true) {
                             $val = call_user_func($callable, $instance);
                         } else {
                             if ($isEloquent === true) {
@@ -218,9 +229,9 @@ class Model
         return new Hal($href, $e);
     }
 
-    public function exportAll($expand = true)
+    public function exportAll($instance, $expand = true)
     {
-        return $this->export($expand, true);
+        return $this->export($instance, $expand, true);
     }
 
     private function exportValue($value)

@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 abstract class AbstractResource extends Controller
 {
@@ -52,7 +54,15 @@ abstract class AbstractResource extends Controller
         $response = new Hal($this->getCurrentActionUri());
         $response->setData($attributes);
 
-        throw new HttpException($statusCode, $response->asJson(), null, ['content-type' => 'application/json']);
+        switch ($statusCode) {
+            case 404:
+                throw new NotFoundHttpException($response->asJson());
+            case 409:
+                throw new ConflictHttpException($response->asJson());
+
+            default:
+                throw new HttpException($statusCode, $response->asJson(), null, ['content-type' => 'application/json']);
+        }
     }
 
     public function allowPrettyInterface()
@@ -113,13 +123,20 @@ abstract class AbstractResource extends Controller
 
     public function export($instance)
     {
-        $model = $this->getDefinition()->getModel();
-
-        if ($model === null) {
-            return null;
+        if (($model = $this->getDefinition()->getModel()) !== null) {
+            return $model->export($instance);
         }
 
-        return $model->export($instance);
+        return null;
+    }
+
+    public function exportAll($instance)
+    {
+        if (($model = $this->getDefinition()->getModel()) !== null) {
+            return $model->exportAll($instance);
+        }
+
+        return null;
     }
 
     /**
@@ -212,7 +229,7 @@ abstract class AbstractResource extends Controller
     public function createInstanceHref($instance)
     {
         if (($action = $this->getDefinition()->findAction(ActionDefinition::TYPE_INSTANCE)) !== null) {
-            return $this->urlService->route($action->getRouteName(), ['id' => 1]);
+            return $this->urlService->route($action->getRouteName(), ['id' => $action->getModel()->getPrimaryKeyValueForInstance($instance)]);
         }
 
         return null;

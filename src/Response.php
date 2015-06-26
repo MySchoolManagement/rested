@@ -121,14 +121,13 @@ class InstanceResponse extends Response
      */
     public $item;
 
-    public function __construct($item)
+    public function __construct(Hal $item)
     {
         $this->item = $item;
     }
 
     public function toJson(AbstractResource $resource)
     {
-        $hal = new Hal('/abc');
-        $hal->setData([$this->item]);
+        return $this->item->asJson();
     }
 }
