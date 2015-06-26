@@ -1,6 +1,7 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Definition\Parameter;
 use Rested\Helper;
 
 class Field
@@ -86,6 +87,11 @@ class Field
     public function getType()
     {
         return $this->type;
+    }
+
+    public function getTypeValidatorName()
+    {
+        return Parameter::getValidator($this->getType());
     }
 
     public function getValidationParameters()

@@ -1,6 +1,8 @@
 <?php
 namespace Rested\Definition;
 
+use Ramsey\Uuid\Uuid;
+
 class Parameter
 {
 
@@ -12,9 +14,7 @@ class Parameter
     const TYPE_STRING = 'string';
     const TYPE_UUID = 'uuid';
 
-    private $types;
-
-    private $typeFriendly;
+    private $type;
 
     private $description;
 
@@ -27,8 +27,7 @@ class Parameter
     public function __construct($name, $type, $defaultValue, $description, $required = false)
     {
         $this->name = $name;
-        $this->typeFriendly = $type;
-        $this->types = explode('|', $type);
+        $this->type = $type;
         $this->defaultValue = $defaultValue;
         $this->description = $description;
         $this->required = $required;
@@ -36,12 +35,12 @@ class Parameter
 
     public function acceptAnyValue()
     {
-        return in_array('mixed', $this->types);
+        return $this->expects('mixed');
     }
 
     public function expects($type)
     {
-        return in_array($type, $this->types);
+        return ($this->type === $type);
     }
 
     public function getDefaultValue()
@@ -61,58 +60,61 @@ class Parameter
 
     public function getType()
     {
-        return $this->typeFriendly;
-    }
-
-    public function getTypeFriendly()
-    {
-        return $this->typeFriendly;
-    }
-
-    public function getValidatorPattern($full = true)
-    {
-        $patterns = array();
-
-        foreach ($this->types as $type) {
-            switch ($type) {
-                case self::TYPE_DATE:
-                    $patterns[] = '[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])';
-                    break;
-
-                case self::TYPE_INT:
-                    $patterns[] = '\d+';
-                    break;
-
-                case self::TYPE_STRING:
-                    $patterns[] = '\w+';
-                    break;
-
-                case self::TYPE_ARRAY:
-                    break;
-
-                case self::TYPE_UUID:
-                    $patterns[] = '.*\-.*\-.*\-.*\-.*';
-                    break;
-
-                case TYPE_SLASH:
-                    $patterns[] = '.+';
-                    break;
-
-                default:
-                    throw new \Exception(sprintf('Unsupported resource parameter type \'%s\' for \'%s\'', $type, $this->getName()));
-                    break;
-            }
-        }
-
-        if ($full == true) {
-            return sprintf('/%s/', join('|', $patterns));
-        } else {
-            return join('|', $patterns);
-        }
+        return $this->type;
     }
 
     public function isRequired()
     {
         return $this->required;
+    }
+
+    public static function getValidator($type)
+    {
+        switch ($type) {
+            case self::TYPE_DATE:
+                return 'date_format:Y-m-d';
+
+            case self::TYPE_DATETIME:
+                return sprintf('date_format:%s'. \DateTime::ISO8601);
+
+            case self::TYPE_INT:
+                return 'numeric';
+
+            case self::TYPE_STRING:
+                return 'string';
+
+            case self::TYPE_ARRAY:
+                return 'array';
+
+            case self::TYPE_UUID:
+                return 'uuid';
+        }
+
+        return null;
+    }
+
+    public static function getValidatorPattern($type)
+    {
+        switch ($type) {
+            case self::TYPE_DATE:
+                return '[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])';
+
+            case self::TYPE_DATETIME:
+                return sprintf('date_format:%s'. \DateTime::ISO8601);
+
+            case self::TYPE_INT:
+                return '\d+';
+
+            case self::TYPE_STRING:
+                return '\w+';
+
+            case self::TYPE_ARRAY:
+                return '';
+
+            case self::TYPE_UUID:
+                return Uuid::VALID_PATTERN;
+        }
+
+        return null;
     }
 }

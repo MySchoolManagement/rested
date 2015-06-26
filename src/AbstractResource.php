@@ -255,7 +255,12 @@ abstract class AbstractResource extends Controller
 
             foreach ($model->getFields() as $field) {
                 if ($field->isModel() === true) {
-                    $rules[$field->getName()] = $field->getValidationParameters();
+                    $parameters = $field->getValidationParameters();
+
+                    // add a validator for the data type of this field
+                    $parameters .= '|' . $field->getTypeValidatorName();
+
+                    $rules[$field->getName()] = $parameters;
                 }
             }
 

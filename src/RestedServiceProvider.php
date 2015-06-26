@@ -2,7 +2,10 @@
 namespace Rested;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Ramsey\Uuid\Uuid;
+use Rested\Definition\Parameter;
 use Rested\Http\Middleware\RoleCheckMiddleware;
 
 class RestedServiceProvider extends ServiceProvider
@@ -20,11 +23,15 @@ class RestedServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/rested.php' => config_path('rested.php'),
         ]);
+        $this->loadTranslationsFrom(__DIR__ . '/../lang', 'Rested');
 
         $app = $this->app;
 
-        $this->router = $app->make('router');
+        Validator::extend('uuid', function($attribute, $value, $parameters) {
+            return Uuid::isValid($value);
+        });
 
+        $this->router = $app->make('router');
         $this->router->middleware('role_check', 'middleware.role_check');
 
         if ($this->app->routesAreCached() === false) {
@@ -103,28 +110,12 @@ class RestedServiceProvider extends ServiceProvider
                 'uses' => $callable,
             ]);
 
-            //$this->routes->add($routeName, $route);
-
-            /* $actionCacheEntry = [
-                 '_rest_callable'      => $action->getCallable(),
-                 'href'                => $href,
-                 'method'              => $action->getMethod(),
-                 'required_permission' => $action->getRequiredPermission(),
-                 'tokens'              => []
-             ];
-
              // add constraints and validators to the cache
              foreach ($action->getTokens() as $token) {
-                 $actionCacheEntry['tokens'][] = [
-                     'name'              => $token->getName(),
-                     'default_value'     => $token->getDefaultValue(),
-                     'validator_pattern' => $token->acceptAnyValue() ? null : $token->getValidatorPattern(false)
-                 ];
+                 if ($token->acceptAnyValue() === false) {
+                     $route->where($token->getName(), Parameter::getValidatorPattern($token->getType()));
+                 }
              }
-
-             $endpointCacheEntry['actions'][] = $actionCacheEntry;*/
         }
-
-        //$this->cache[] = $endpointCacheEntry;*/
     }
 }
