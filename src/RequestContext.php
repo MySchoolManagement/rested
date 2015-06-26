@@ -171,7 +171,7 @@ class RequestContext
                             $r = true;
                         }
                     } else {
-                        $r = preg_match($parameter->getValidatorPattern(), $data[$parameter->getName()]);
+                        $r = preg_match('/'.Parameter::getValidatorPattern($parameter->getType()).'/i', $data[$parameter->getName()]);
                     }
                 }
 
