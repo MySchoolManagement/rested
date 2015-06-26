@@ -219,7 +219,18 @@ abstract class EloquentResource extends AbstractResource
      */
     protected function findInstance($id)
     {
-        return $this->createQueryBuilder()->findOneByPrimaryKey($id);
+        $model = $this->getCurrentModel();
+        $field = $model->getPrimaryKeyField();
+
+        if ($field !== null) {
+            return $this
+                ->createQueryBuilder()
+                ->where($field->getGetter(), $id)
+                ->first()
+            ;
+        }
+
+        return null;
     }
 
     /**

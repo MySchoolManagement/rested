@@ -148,9 +148,17 @@ class Model
         return $this->resourceDefinition;
     }
 
+    /**
+     * @return \Rested\Definition\Field|null
+     */
+    public function getPrimaryKeyField()
+    {
+        return $this->findField($this->primaryKeyField);
+    }
+
     public function getPrimaryKeyValueForInstance($instance)
     {
-        if (($field = $this->findField($this->primaryKeyField)) !== null) {
+        if (($field = $this->getPrimaryKeyField()) !== null) {
             $isEloquent = $instance instanceof EloquentModel;
 
             if ($isEloquent === true) {
