@@ -108,7 +108,7 @@ class CollectionResponse extends Response
         ]);
         $hal->setResource('items', $this->items);
 
-        return $hal->asJson(true);
+        return $hal->asJson();
     }
 
 }
