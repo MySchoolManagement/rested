@@ -151,6 +151,12 @@ class Model
     public function getPrimaryKeyValueForInstance($instance)
     {
         if (($field = $this->findField($this->primaryKeyField)) !== null) {
+            $isEloquent = $instance instanceof EloquentModel;
+
+            if ($isEloquent === true) {
+                return $instance->getAttribute($field->getGetter());
+            }
+
             return $instance->{$field->getGetter()}();
         }
 
