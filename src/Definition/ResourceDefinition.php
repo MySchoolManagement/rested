@@ -35,7 +35,7 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addCollectionAction($callable)
+    public function addCollectionAction($callable = 'collection')
     {
         return $this->addAction(ActionDefinition::TYPE_COLLECTION, $callable);
     }
@@ -43,7 +43,7 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addCreateAction($callable, Model $modelOverride = null)
+    public function addCreateAction($callable = 'create', Model $modelOverride = null)
     {
         $action = $this->addAction(ActionDefinition::TYPE_CREATE, $callable);
         $action->setModelOverride($modelOverride);
@@ -54,7 +54,7 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addDeleteAction($callable, $type = Parameter::TYPE_UUID)
+    public function addDeleteAction($callable = 'delete', $type = Parameter::TYPE_UUID)
     {
         $action = $this->addAction(ActionDefinition::TYPE_DELETE, $callable);
         $action->addToken('id', $type);
@@ -65,7 +65,7 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addInstanceAction($callable, $type = Parameter::TYPE_UUID)
+    public function addInstanceAction($callable = 'instance', $type = Parameter::TYPE_UUID)
     {
         $action = $this->addAction(ActionDefinition::TYPE_INSTANCE, $callable);
         $action->addToken('id', $type);
@@ -97,7 +97,7 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addUpdateAction($callable, $type = Parameter::TYPE_UUID)
+    public function addUpdateAction($callable = 'update', $type = Parameter::TYPE_UUID)
     {
         $action = $this->addAction(ActionDefinition::TYPE_UPDATE, $callable);
         $action->addToken('id', $type);
