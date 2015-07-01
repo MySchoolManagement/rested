@@ -234,7 +234,7 @@ class Model
                             }
                         }
 
-                        $e[$def->getName()] = $this->exportValue($val);
+                        $e[$def->getName()] = $this->exportValue($def, $val);
                     }
                 }
             }
@@ -248,7 +248,7 @@ class Model
         return $this->export($instance, $expand, true);
     }
 
-    private function exportValue($value)
+    private function exportValue(Field $field, $value)
     {
         $return = null;
 
@@ -256,10 +256,14 @@ class Model
             $return = [];
 
             foreach ($value as $key => $otherValue) {
-                $return[$key] = $this->exportValue($otherValue);
+                $return[$key] = $this->exportValue($field, $otherValue);
             }
         } else if ($value instanceof \DateTime) {
-            $return = $value->format(\DateTime::ISO8601);
+            if ($field->getType() === Parameter::TYPE_DATE) {
+                $return = $value->format('Y-m-d');
+            } else {
+                $return = $value->format(\DateTime::ISO8601);
+            }
         } else if (is_object($value) === true) {
             throw new \Exception('NOT IMPLEMENTED');
             //$return = $value->export($context);
