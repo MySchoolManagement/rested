@@ -2,65 +2,77 @@
 namespace Rested;
 
 use Nocarrier\Hal;
+use Rested\Definition\ActionDefinition;
 use Symfony\Component\Form\FormInterface;
 
-abstract class Response
+abstract class Response extends Hal
 {
 
-    public abstract function toJson(AbstractResource $resource);
+    protected function addActions(AbstractResource $resource, array $which)
+    {
+        $def = $resource->getDefinition();
+        $actions = $def->getActions();
+
+        $this->data['_actions'] = [];
+
+        foreach ($actions as $action) {
+            if (in_array($action->getType(), $which) === false) {
+                continue;
+            }
+
+            $fields = [];
+            $model = $action->getModel();
+
+            foreach ($model->getFields() as $field) {
+                if ($field->isModel() === false) {
+                    continue;
+                }
+
+                $fields[] = [
+                    'name' => $field->getName(),
+                    'type' => $field->getType(),
+                ];
+            }
+
+            $this->data['_actions'][] = [
+                'name' => $action->getName(),
+                'href' => $this->getUri(),
+                'method' => $action->getVerb(),
+                'type' => 'application/json',
+                'fields' => $fields,
+            ];
+        }
+    }
 
     /**
      * @return CollectionResponse
      */
-    public static function createCollection(array $items = [], $total = 0)
+    public static function createCollection(AbstractResource $resource, array $items = [], $total = 0)
     {
-        return new CollectionResponse($items, $total);
+        return new CollectionResponse($resource, $items, $total);
     }
 
     /**
      * @return InstanceResponse
      */
-    public static function createInstance($item)
+    public static function createInstance(AbstractResource $resource, $href, $item)
     {
-        return new InstanceResponse($item);
+        return new InstanceResponse($resource, $href, $item);
     }
 }
 
 class CollectionResponse extends Response
 {
 
-    /**
-     * @var int
-     */
-    public $count = 0;
-
-    /**
-     * @var int
-     */
-    public $total = 0;
-
-    /**
-     * @var \stdClass[]
-     */
-    public $items = [];
-
-    public function __construct(array $items, $total)
+    public function __construct(AbstractResource $resource, array $items, $total)
     {
-        $this->count = sizeof($items);
-        $this->total = (int) $total;
-        $this->items = $items;
-    }
-
-    public function toJson(AbstractResource $resource)
-    {
-        $hal = new Hal($resource->getCurrentActionUri());
-        $hal->setData([
-            'count' => $this->count,
-            'total' => $this->total,
+        parent::__construct($resource->getCurrentActionUri(), [
+            'count' => sizeof($items),
+            'total' => $total,
         ]);
-        $hal->setResource('items', $this->items);
 
-        return $hal->asJson();
+        $this->setResource('items', $items);
+        $this->addActions($resource, [ActionDefinition::TYPE_CREATE]);
     }
 
 }
@@ -68,18 +80,13 @@ class CollectionResponse extends Response
 class InstanceResponse extends Response
 {
 
-    /**
-     * @var \stdClass
-     */
-    public $item;
-
-    public function __construct(Hal $item)
+    public function __construct(AbstractResource $resource, $href, array $item)
     {
-        $this->item = $item;
-    }
+        parent::__construct($href, $item);
 
-    public function toJson(AbstractResource $resource)
-    {
-        return $this->item->asJson();
+        $this->addActions($resource, [
+            ActionDefinition::TYPE_DELETE,
+            ActionDefinition::TYPE_UPDATE
+        ]);
     }
 }

@@ -27,6 +27,8 @@ class ActionDefinition
 
     private $modelOverride;
 
+    private $name;
+
     private $summary;
 
     private $type;
@@ -37,20 +39,11 @@ class ActionDefinition
 
     private $tokens = [];
 
-    public function getMapping()
-    {
-        return Mapping::create('Action Definition', self::class)
-                ->addField('description',         'string', 'getDescription',        null, false, 'Description of the endpoint.')
-                ->addField('required_permission', 'string', 'getRequiredPermission', null, false, 'Permission required to call this action.')
-                ->addField('summary',             'string', 'getSummary',            null, false, 'Summary of the endpoint\'s purpose.')
-                ->addField('verb',                'string', 'getVerb',               null, false, 'HTTP verb to use when calling this action.')
-            ;
-    }
-
-    public function __construct(ResourceDefinition $definition, $type, $callable)
+    public function __construct(ResourceDefinition $definition, $type, $name, $callable)
     {
         $this->callable = $callable;
         $this->definition = $definition;
+        $this->name = $name;
         $this->type = $type;
     }
 
@@ -123,6 +116,9 @@ class ActionDefinition
         return $this->getDefinition()->getModel();
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
@@ -135,7 +131,7 @@ class ActionDefinition
         }
 
         $endpoint = $this->getDefinition()->getEndpoint();
-        $type = $this->getTypeName();
+        $type = $this->getName();
 
         $loose = Helper::makeRoleName($endpoint);
         $specific = Helper::makeRoleName($endpoint, $type);
@@ -150,7 +146,7 @@ class ActionDefinition
         }
 
         $endpoint = $this->getDefinition()->getEndpoint();
-        $type = $this->getTypeName();
+        $type = $this->getName();
 
         return ($this->cacheRouteName = Helper::makeRouteName($endpoint, $type));
     }
@@ -210,19 +206,19 @@ class ActionDefinition
         switch ($this->type) {
             case ActionDefinition::TYPE_COLLECTION:
             case ActionDefinition::TYPE_INSTANCE:
-                return 'get';
+                return 'GET';
 
             case ActionDefinition::TYPE_CREATE:
-                return 'post';
+                return 'POST';
 
             case ActionDefinition::TYPE_DELETE:
-                return 'delete';
+                return 'DELETE';
 
             case ActionDefinition::TYPE_UPDATE:
-                return 'put';
+                return 'PUT';
         }
 
-        return 'get';
+        return 'GET';
     }
 
     public function setDescription($value)

@@ -3,6 +3,7 @@ namespace Rested\Definition;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Nocarrier\Hal;
+use Rested\Response;
 
 /**
  * Maps an external representation of a resource to an actual object.
@@ -240,7 +241,7 @@ class Model
             }
         }
 
-        return new Hal($href, $e);
+        return Response::createInstance($resource, $href, $e);
     }
 
     public function exportAll($instance, $expand = true)

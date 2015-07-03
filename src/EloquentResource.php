@@ -79,9 +79,9 @@ abstract class EloquentResource extends AbstractResource
 
         // build total
         $total = $this->createQueryBuilder(true, false)->count();
-        $response = Response::createCollection($items, $total);
+        $item = Response::createCollection($this, $items, $total);
 
-        return $this->done($response);
+        return $this->done($item);
     }
 
     public function create(Request $request)
@@ -110,9 +110,8 @@ abstract class EloquentResource extends AbstractResource
         }
 
         $item = $this->exportAll($instance);
-        $response = Response::createInstance($item);
 
-        return $this->done($response, HttpResponse::HTTP_CREATED);
+        return $this->done($item, HttpResponse::HTTP_CREATED);
     }
 
 
@@ -184,9 +183,8 @@ abstract class EloquentResource extends AbstractResource
         }
 
         $item = $this->export($instance);
-        $response = Response::createInstance($item);
 
-        return $this->done($response);
+        return $this->done($item);
     }
 
     public function update(Request $request, $id)
@@ -211,9 +209,8 @@ abstract class EloquentResource extends AbstractResource
         }
 
         $item = $this->exportAll($instance);
-        $response = Response::createInstance($item);
 
-        return $this->done($response, HttpResponse::HTTP_OK);
+        return $this->done($item, HttpResponse::HTTP_OK);
     }
 
     /**
