@@ -7,6 +7,7 @@ class Parameter
 {
 
     const TYPE_ARRAY = 'array';
+    const TYPE_BOOL = 'bool';
     const TYPE_DATE = 'date';
     const TYPE_DATETIME = 'datetime';
     const TYPE_INT = 'int';
@@ -71,6 +72,9 @@ class Parameter
     public static function getValidator($type)
     {
         switch ($type) {
+            case self::TYPE_BOOL:
+                return 'boolean';
+
             case self::TYPE_DATE:
                 return 'date_format:Y-m-d';
 
@@ -96,6 +100,9 @@ class Parameter
     public static function getValidatorPattern($type)
     {
         switch ($type) {
+            case self::TYPE_BOOL:
+                return '[01]|true|false';
+
             case self::TYPE_DATE:
                 return '[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])';
 
