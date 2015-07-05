@@ -7,6 +7,7 @@ use Rested\Exceptions\ActionExistsException;
 use Rested\Helper;
 use Rested\RequestContext;
 use Rested\RestedServiceProvider;
+use Rested\Security\AccessVoter;
 use Rested\Traits\RestedInstanceTrait;
 
 class ResourceDefinition
@@ -26,9 +27,10 @@ class ResourceDefinition
 
     private $summary;
 
-    public function __construct($name, AbstractResource $resource)
+    public function __construct($name, AbstractResource $resource, $class)
     {
         $this->resource = $resource;
+        $this->model = Model::create($this, $class);
         $this->name = $name;
         $this->restedService = app()->make(RestedServiceProvider::class);
     }
@@ -75,19 +77,6 @@ class ResourceDefinition
     }
 
     /**
-     * @return \Rested\Definition\Model
-     * @throws \Exception
-     */
-    public function addModel($class)
-    {
-        if ($this->model !== null) {
-            throw new \Exception('There is already a model attached');
-        }
-
-        return ($this->model = Model::create($this, $class));
-    }
-
-    /**
      * @return \Rested\Definition\ActionDefinition
      * @throws \Rested\Exceptions\ActionExistsException
      */
@@ -110,6 +99,15 @@ class ResourceDefinition
         $action->addToken('id', $type);
 
         return $action;
+    }
+
+    public function filterActionsForAccess()
+    {
+        $user = $this->getResource()->getUser();
+
+        return array_filter($this->actions, function($action) use ($user) {
+            return $user->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $action);
+        });
     }
 
     /**
@@ -187,8 +185,8 @@ class ResourceDefinition
         return $this;
     }
 
-    public static function create($name, AbstractResource $resource)
+    public static function create($name, AbstractResource $resource, $class)
     {
-        return new ResourceDefinition($name, $resource);
+        return new ResourceDefinition($name, $resource, $class);
     }
 }

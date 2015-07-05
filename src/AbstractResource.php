@@ -115,7 +115,7 @@ abstract class AbstractResource extends Controller
     public function done(Response $response = null, $statusCode = HttpResponse::HTTP_OK, $headers = [])
     {
         $headers = array_merge(['content-type' => 'application/json'], $headers);
-        $json = $response ? $response->asJson() : '';
+        $json = $response ? $response->asJson($this) : '';
 
         return new HttpResponse($json, $statusCode, $headers);
     }

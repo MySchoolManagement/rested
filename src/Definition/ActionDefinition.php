@@ -17,8 +17,6 @@ class ActionDefinition
 
     private $definition;
 
-    private $cacheRoleNames;
-
     private $cacheRouteName;
 
     private $callable;
@@ -122,21 +120,6 @@ class ActionDefinition
     public function getName()
     {
         return $this->name;
-    }
-
-    public function getRoleNames()
-    {
-        if ($this->cacheRoleNames !== null) {
-            return $this->cacheRoleNames;
-        }
-
-        $endpoint = $this->getDefinition()->getEndpoint();
-        $type = $this->getName();
-
-        $loose = Helper::makeRoleName($endpoint);
-        $specific = Helper::makeRoleName($endpoint, $type);
-
-        return ($this->cacheRoleNames = [$loose, $specific]);
     }
 
     public function getRouteName()

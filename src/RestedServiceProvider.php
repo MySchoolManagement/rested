@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Ramsey\Uuid\Uuid;
 use Rested\Definition\Parameter;
 use Rested\Http\Middleware\RoleCheckMiddleware;
+use Rested\Security\AccessVoter;
 
 class RestedServiceProvider extends ServiceProvider
 {
@@ -25,18 +26,19 @@ class RestedServiceProvider extends ServiceProvider
         ]);
         $this->loadTranslationsFrom(__DIR__ . '/../lang', 'Rested');
 
-        $app = $this->app;
-
         Validator::extend('uuid', function($attribute, $value, $parameters) {
             return Uuid::isValid($value);
         });
+
+
+        $app = $this->app;
 
         $this->router = $app->make('router');
         $this->router->middleware('role_check', 'middleware.role_check');
 
         if ($this->app->routesAreCached() === false) {
             // add some core resources
-            $this->addResource('Rested\Resources\EntrypointResource');
+            //$this->addResource('Rested\Resources\EntrypointResource');
 
             $this->processResources();
         }
@@ -61,6 +63,11 @@ class RestedServiceProvider extends ServiceProvider
         $app['middleware.role_check'] = $app->share(function($app) {
             return new RoleCheckMiddleware($app['security.authorization_checker']);
         });
+
+        $app->extend('security.voters', function(array $voters) {
+            return array_merge($voters, [new AccessVoter()]);
+        });
+
     }
 
     /**
@@ -100,13 +107,11 @@ class RestedServiceProvider extends ServiceProvider
             }
 
             $routeName = $action->getRouteName();
-            $roleNames = $action->getRoleNames();
             $callable = sprintf('%s@%s', $class, $action->getCallable());
             $route = $router->{$action->getVerb()}($href, [
                 'as' => $routeName,
                 'middleware' => 'role_check',
                 'rested_type' => $action->getType(),
-                'roles' => $roleNames,
                 'uses' => $callable,
             ]);
 

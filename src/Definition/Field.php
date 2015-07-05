@@ -7,7 +7,6 @@ use Rested\Helper;
 class Field
 {
 
-    private $cacheRoleNames;
     private $description;
     private $getter;
     private $model;
@@ -63,25 +62,6 @@ class Field
     public function getName()
     {
         return $this->name;
-    }
-
-    public function getRoleNames($operation)
-    {
-        if ($this->cacheRoleNames !== null) {
-            return $this->cacheRoleNames;
-        }
-
-        $endpoint = $this->getModel()->getDefinition()->getEndpoint();
-
-        $roles = [
-            Helper::makeRoleName($endpoint, 'field', $this->getName()),
-            Helper::makeRoleName($endpoint, 'field', $this->getName(), $operation),
-            Helper::makeRoleName($endpoint, 'field', 'all'),
-            Helper::makeRoleName($endpoint, 'field', 'all', $operation),
-        ];
-
-
-        return ($this->cacheRoleName = $roles);
     }
 
     public function getType()

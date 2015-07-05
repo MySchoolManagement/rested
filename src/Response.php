@@ -11,7 +11,7 @@ abstract class Response extends Hal
     protected function addActions(AbstractResource $resource, array $which)
     {
         $def = $resource->getDefinition();
-        $actions = $def->getActions();
+        $actions = $def->filterActionsForAccess();
 
         $this->data['_actions'] = [];
 

@@ -4,6 +4,7 @@ namespace Rested\Definition;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Nocarrier\Hal;
 use Rested\Response;
+use Rested\Security\AccessVoter;
 
 /**
  * Maps an external representation of a resource to an actual object.
@@ -102,12 +103,11 @@ class Model
         // TODO: should we throw an exception when data is supplied for a field that cannot be set?
         foreach ($data as $key => $value) {
             if (($field = $this->findField($key)) !== null) {
-                // do they have permission to set this field?
-                if ($user->isGranted($field->getRoleNames('set')) == false) {
-                    continue;
-                }
-
                 if ($field->isModel() === true) {
+                    if ($user->isGranted(AccessVoter::ATTRIB_FIELD_SET, $field) === false) {
+                        continue;
+                    }
+
                     $setter = $field->getSetter();
 
                     if ($isEloquent === true) {
@@ -120,6 +120,15 @@ class Model
         }
 
         return $obj;
+    }
+
+    public function filterFieldsForAccess($operation)
+    {
+        $user = $this->getUser();
+
+        return array_filter($this->fields, function($field) use ($user, $operation) {
+            return $user->isGranted($operation, $field);
+        });
     }
 
     public function findField($name)
@@ -172,6 +181,14 @@ class Model
         return null;
     }
 
+    private function getUser()
+    {
+        $resource = $this->resourceDefinition->getResource();
+        $user = $resource->getUser();
+
+        return $user;
+    }
+
     /**
      * Adds a new field to the mapping.
      *
@@ -203,7 +220,6 @@ class Model
         $href = '';
         $resource = $this->resourceDefinition->getResource();
         $context = $resource->getContext();
-        $user = $resource->getUser();
 
         // add href if we have a context
         if ($context !== null) {
@@ -211,17 +227,12 @@ class Model
         }
 
         if ($expand === true) {
-            $fields = $this->getFields();
+            $fields = $this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_GET);
             $isEloquent = $instance instanceof EloquentModel;
 
             foreach ($fields as $def) {
                 // a null context means all fields except expansions
                 if (($context === null) || ($forceAllFields === true) || ($context->wantsField($def->getName()) === true)) {
-                    // do they have permission to get this field?
-                    if ($user->isGranted($def->getRoleNames('get')) == false) {
-                        continue;
-                    }
-
                     $callable = $def->getGetter();
 
                     if ($callable !== null) {

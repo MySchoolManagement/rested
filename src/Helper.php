@@ -11,6 +11,35 @@ class Helper
         }
     }
 
+    public static function createRolesForObject($attribute, $object)
+    {
+        $class = get_class($object);
+
+        if ($class === 'Rested\Definition\ActionDefinition') {
+            $endpoint = $object->getDefinition()->getEndpoint();
+            $name = $object->getName();
+            $loose = Helper::makeRoleName($endpoint);
+            $specific = Helper::makeRoleName($endpoint, $name);
+
+            return [$loose, $specific];
+        } else if ($class === 'Rested\Definition\Field') {
+            $endpoint = $object->getModel()->getDefinition()->getEndpoint();
+
+            $roles = [
+                Helper::makeRoleName($endpoint, 'field', $object->getName()),
+                Helper::makeRoleName($endpoint, 'field', $object->getName(), $attribute),
+                Helper::makeRoleName($endpoint, 'field', 'all'),
+                Helper::makeRoleName($endpoint, 'field', 'all', $attribute),
+            ];
+
+            return $roles;
+        } else {
+            throw new \InvalidArgumentException(get_class($object) . ' is not supported');
+        }
+
+        return [];
+    }
+
     public static function makeRoleName()
     {
         $parts = func_get_args();
