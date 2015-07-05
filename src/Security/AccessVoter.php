@@ -13,8 +13,8 @@ class AccessVoter extends AbstractVoter
     const ATTRIB_FIELD_GET = 'GET';
     const ATTRIB_FIELD_SET = 'SET';
 
-    const CLASS_ACTION_DEFINITION = 'Rested\Definition\ActionDefinition';
-    const CLASS_ACTION_FIELD = 'Rested\Definition\Field';
+    const CLASS_ACTION = 'Rested\Definition\ActionDefinition';
+    const CLASS_FIELD = 'Rested\Definition\Field';
 
     /**
      * {@inheritdoc}
@@ -34,8 +34,8 @@ class AccessVoter extends AbstractVoter
     protected function getSupportedClasses()
     {
         return [
-            self::CLASS_ACTION_DEFINITION,
-            self::CLASS_ACTION_FIELD,
+            self::CLASS_ACTION,
+            self::CLASS_FIELD,
         ];
     }
 
@@ -51,11 +51,11 @@ class AccessVoter extends AbstractVoter
         }
 
         if ($attribute === self::ATTRIB_ACTION_ACCESS) {
-            if ($class !== self::CLASS_ACTION_DEFINITION) {
+            if ($class !== self::CLASS_ACTION) {
                 throw new UnsupportedAttributeException($attribute, $class);
             }
         } else {
-            if ($class !== self::CLASS_ACTION_FIELD) {
+            if ($class !== self::CLASS_FIELD) {
                 throw new UnsupportedAttributeException($attribute, $class);
             }
         }
