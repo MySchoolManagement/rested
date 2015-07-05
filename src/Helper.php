@@ -51,9 +51,8 @@ class Helper
     public static function makeRouteName()
     {
         $parts = func_get_args();
-        array_unshift($parts, 'rested');
 
-        return self::makeSlugFromArray($parts, ['delimiter' => '_']);
+        return 'rested.' . self::makeSlugFromArray($parts, ['delimiter' => '_']);
     }
 
     public static function makeSlugFromArray(array $arr = [], array $options = [])
