@@ -5,12 +5,14 @@ use App\Http\Requests\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Validator;
+use Rested\Security\AccessVoter;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 abstract class AbstractResource extends Controller
 {
@@ -23,7 +25,7 @@ abstract class AbstractResource extends Controller
 
     private $actionType;
 
-    public function __construct(Router $router = null)
+    public function __construct(AuthorizationCheckerInterface $authorizationChecker = null, Router $router = null)
     {
         // if we're in the request scope then create a context
         if (($router !== null) && (($route = $router->getCurrentRoute()) !== null)) {
@@ -33,6 +35,10 @@ abstract class AbstractResource extends Controller
             $this->context = new RequestContext($request, $this);
             $this->urlService = app('url'); // FIXME: use DI
             $this->actionType = $action['rested_type'];
+
+            if ($authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {
+                $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
+            }
 
             if (in_array($request->getMethod(), ['PATCH', 'POST', 'PUT']) === true) {
                 $this->validate();
@@ -147,9 +153,18 @@ abstract class AbstractResource extends Controller
         return $this->context;
     }
 
-    public function getCurrentActionUri()
+    public function getCurrentAction()
     {
         if (($action = $this->getDefinition()->findAction($this->actionType)) !== null) {
+            return $action;
+        }
+
+        return null;
+    }
+
+    public function getCurrentActionUri()
+    {
+        if (($action = $this->getCurrentAction()) !== null) {
             return $this->urlService->route($action->getRouteName());
         }
 
