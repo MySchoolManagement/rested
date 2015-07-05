@@ -13,7 +13,7 @@ class Helper
 
     public static function createRolesForObject($attribute, $object)
     {
-        $class = get_class($object);
+        $class = is_string($object) ? $object : get_class($object);
 
         if ($class === 'Rested\Definition\ActionDefinition') {
             $endpoint = $object->getDefinition()->getEndpoint();
