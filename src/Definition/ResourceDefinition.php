@@ -38,17 +38,17 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addCollectionAction($name = 'collection', $callable = 'collection')
+    public function addCollection($name = 'collection')
     {
-        return $this->addAction(ActionDefinition::TYPE_COLLECTION, $name, $callable);
+        return $this->addAction(ActionDefinition::TYPE_COLLECTION, $name);
     }
 
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addCreateAction($name = 'create', $callable = 'create', Model $modelOverride = null)
+    public function addCreateAction($name = 'create', Model $modelOverride = null)
     {
-        $action = $this->addAction(ActionDefinition::TYPE_CREATE, $name, $callable);
+        $action = $this->addAction(ActionDefinition::TYPE_CREATE, $name);
         $action->setModelOverride($modelOverride);
 
         return $action;
@@ -57,9 +57,9 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addDeleteAction($name = 'delete', $callable = 'delete', $type = Parameter::TYPE_UUID)
+    public function addDeleteAction($name = 'delete', $type = Parameter::TYPE_UUID)
     {
-        $action = $this->addAction(ActionDefinition::TYPE_DELETE, $name, $callable);
+        $action = $this->addAction(ActionDefinition::TYPE_DELETE, $name);
         $action->addToken('id', $type);
 
         return $action;
@@ -68,9 +68,9 @@ class ResourceDefinition
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addInstanceAction($name = 'instance', $callable = 'instance', $type = Parameter::TYPE_UUID)
+    public function addInstance($name = 'instance', $type = Parameter::TYPE_UUID)
     {
-        $action = $this->addAction(ActionDefinition::TYPE_INSTANCE, $name, $callable);
+        $action = $this->addAction(ActionDefinition::TYPE_INSTANCE, $name);
         $action->addToken('id', $type);
 
         return $action;
@@ -80,22 +80,22 @@ class ResourceDefinition
      * @return \Rested\Definition\ActionDefinition
      * @throws \Rested\Exceptions\ActionExistsException
      */
-    private function addAction($type, $name, $callable)
+    private function addAction($type, $name)
     {
         foreach ($this->actions as $action) {
             if (mb_strtolower($action->getName()) === mb_strtolower($name)) {
                 throw new ActionExistsException($name);
             }
         }
-        return ($this->actions[] = new ActionDefinition($this, $type, $name, $callable));
+        return ($this->actions[] = new ActionDefinition($this, $type, $name));
     }
 
     /**
      * @return \Rested\Definition\ActionDefinition
      */
-    public function addUpdateAction($name = 'update', $callable = 'update', $type = Parameter::TYPE_UUID)
+    public function addUpdateAction($name = 'update', $type = Parameter::TYPE_UUID)
     {
-        $action = $this->addAction(ActionDefinition::TYPE_UPDATE, $name, $callable);
+        $action = $this->addAction(ActionDefinition::TYPE_UPDATE, $name);
         $action->addToken('id', $type);
 
         return $action;

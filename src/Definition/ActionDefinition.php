@@ -37,9 +37,12 @@ class ActionDefinition
 
     private $tokens = [];
 
-    public function __construct(ResourceDefinition $definition, $type, $name, $callable)
+    public function __construct(ResourceDefinition $definition, $type, $name)
     {
-        $this->callable = $callable;
+        // convert hyphenated to camelcase
+        $this->callable = preg_replace_callback('!\-[a-zA-Z]!', function($matches) {
+            return strtoupper(str_replace('-', '', $matches[0]));
+        }, $name);
         $this->definition = $definition;
         $this->name = $name;
         $this->type = $type;
