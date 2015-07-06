@@ -12,6 +12,7 @@ use Rested\Definition\ActionDefinition;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 abstract class AbstractResource extends Controller
@@ -61,6 +62,8 @@ abstract class AbstractResource extends Controller
         $response->setData($attributes);
 
         switch ($statusCode) {
+            case 401:
+                throw new UnauthorizedHttpException('Unauthorized');
             case 404:
                 throw new NotFoundHttpException();
             case 409:
