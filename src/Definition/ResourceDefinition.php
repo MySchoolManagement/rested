@@ -33,7 +33,7 @@ class ResourceDefinition
         $this->resource = $resource;
         $this->model = Model::create($this, $class);
         $this->name = $name;
-        $this->restedService = app()->make(RestedServiceProvider::class);
+        $this->restedService = app('Rested\RestedServiceInterface');
     }
 
     /**
