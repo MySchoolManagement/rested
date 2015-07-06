@@ -1,8 +1,9 @@
 <?php
 namespace Rested;
 
-use Illuminate\Http\Request;
 use Rested\Definition\Parameter;
+use Rested\RestedResourceInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class RequestContext
 {
@@ -17,7 +18,7 @@ class RequestContext
         'filters' => []
     ];
 
-    public function __construct(Request $request, AbstractResource $resource)
+    public function __construct(Request $request, RestedResourceInterface $resource)
     {
         $this->resource = $resource;
         $this->request = $request;

@@ -290,9 +290,4 @@ class Model
     {
         return $this->class;
     }
-
-    public static function create(ResourceDefinition $resourceDefinition, $class)
-    {
-        return new Model($resourceDefinition, $class);
-    }
 }

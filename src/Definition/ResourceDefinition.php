@@ -1,14 +1,14 @@
 <?php
 namespace Rested\Definition;
 
-use Rested\AbstractResource;
 use Rested\Definition\Parameter;
 use Rested\Exceptions\ActionExistsException;
 use Rested\Helper;
 use Rested\RequestContext;
+use Rested\RestedResourceInterface;
+use Rested\RestedServiceInterface;
 use Rested\RestedServiceProvider;
 use Rested\Security\AccessVoter;
-use Rested\Traits\RestedInstanceTrait;
 use Symfony\Component\HttpFoundation\Request;
 
 class ResourceDefinition
@@ -28,12 +28,12 @@ class ResourceDefinition
 
     private $summary;
 
-    public function __construct($name, AbstractResource $resource, $class)
+    public function __construct($name, RestedResourceInterface $resource, RestedServiceInterface $restedService, $class)
     {
         $this->resource = $resource;
-        $this->model = Model::create($this, $class);
+        $this->model = $this->resource->getFactory()->createModel($this, $class);
         $this->name = $name;
-        $this->restedService = app('Rested\RestedServiceInterface');
+        $this->restedService = $restedService;
     }
 
     /**
@@ -198,10 +198,5 @@ class ResourceDefinition
         $this->summary = $value;
 
         return $this;
-    }
-
-    public static function create($name, AbstractResource $resource, $class)
-    {
-        return new ResourceDefinition($name, $resource, $class);
     }
 }

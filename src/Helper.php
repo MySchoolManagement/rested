@@ -52,7 +52,7 @@ class Helper
     {
         $parts = func_get_args();
 
-        return 'rested.' . self::makeSlugFromArray($parts, ['delimiter' => '_']);
+        return 'rested_' . self::makeSlugFromArray($parts, ['delimiter' => '_']);
     }
 
     public static function makeSlugFromArray(array $arr = [], array $options = [])

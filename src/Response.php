@@ -3,12 +3,11 @@ namespace Rested;
 
 use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
-use Symfony\Component\Form\FormInterface;
 
 abstract class Response extends Hal
 {
 
-    protected function addActions(AbstractResource $resource, array $which)
+    protected function addActions(RestedResourceInterface $resource, array $which)
     {
         $def = $resource->getDefinition();
         $actions = $def->filterActionsForAccess();
@@ -53,7 +52,7 @@ abstract class Response extends Hal
     /**
      * @return CollectionResponse
      */
-    public static function createCollection(AbstractResource $resource, array $items = [], $total = 0)
+    public static function createCollection(RestedResourceInterface $resource, array $items = [], $total = 0)
     {
         return new CollectionResponse($resource, $items, $total);
     }
@@ -61,7 +60,7 @@ abstract class Response extends Hal
     /**
      * @return InstanceResponse
      */
-    public static function createInstance(AbstractResource $resource, $href, $item)
+    public static function createInstance(RestedResourceInterface $resource, $href, $item)
     {
         return new InstanceResponse($resource, $href, $item);
     }
@@ -70,7 +69,7 @@ abstract class Response extends Hal
 class CollectionResponse extends Response
 {
 
-    public function __construct(AbstractResource $resource, array $items, $total)
+    public function __construct(RestedResourceInterface $resource, array $items, $total)
     {
         parent::__construct($resource->getCurrentActionUri(), [
             'count' => sizeof($items),
@@ -86,7 +85,7 @@ class CollectionResponse extends Response
 class InstanceResponse extends Response
 {
 
-    public function __construct(AbstractResource $resource, $href, array $item)
+    public function __construct(RestedResourceInterface $resource, $href, array $item)
     {
         parent::__construct($href, $item);
 
