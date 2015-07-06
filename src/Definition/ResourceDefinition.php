@@ -9,6 +9,7 @@ use Rested\RequestContext;
 use Rested\RestedServiceProvider;
 use Rested\Security\AccessVoter;
 use Rested\Traits\RestedInstanceTrait;
+use Symfony\Component\HttpFoundation\Request;
 
 class ResourceDefinition
 {
@@ -75,6 +76,20 @@ class ResourceDefinition
 
         return $action;
     }
+
+    /**
+     * @return \Rested\Definition\ActionDefinition
+     */
+    public function addInstanceAction($name = 'instance', $method = Request::METHOD_POST, $type = Parameter::TYPE_UUID)
+    {
+        $action = $this->addAction(ActionDefinition::TYPE_INSTANCE_ACTION, $name);
+        $action->setMethod($method);
+        $action->addToken('id', $type);
+        $action->appendUrl($name);
+
+        return $action;
+    }
+
 
     /**
      * @return \Rested\Definition\ActionDefinition
@@ -159,9 +174,9 @@ class ResourceDefinition
         return $this->summary;
     }
 
-    public function getUrl()
+    public function getUrl($path = '')
     {
-        return Helper::makeUrl($this->restedService->getPrefix(), $this->endpoint);
+        return Helper::makeUrl($this->restedService->getPrefix(), $this->endpoint, $path);
     }
 
     public function setDescription($value)

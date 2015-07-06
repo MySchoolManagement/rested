@@ -5,6 +5,7 @@ use Rested\Context;
 use Rested\Definition\Mapping;
 use Rested\Helper;
 use Rested\Traits\ExportTrait;
+use Symfony\Component\HttpFoundation\Request;
 
 class ActionDefinition
 {
@@ -13,7 +14,10 @@ class ActionDefinition
     const TYPE_CREATE = 'create';
     const TYPE_DELETE = 'delete';
     const TYPE_INSTANCE = 'instance';
+    const TYPE_INSTANCE_ACTION = 'instance_action';
     const TYPE_UPDATE = 'update';
+
+    private $appendUrl;
 
     private $definition;
 
@@ -22,6 +26,8 @@ class ActionDefinition
     private $callable;
 
     private $description;
+
+    private $method;
 
     private $modelOverride;
 
@@ -43,9 +49,11 @@ class ActionDefinition
         $this->callable = preg_replace_callback('!\-[a-zA-Z]!', function($matches) {
             return strtoupper(str_replace('-', '', $matches[0]));
         }, $name);
+
         $this->definition = $definition;
         $this->name = $name;
         $this->type = $type;
+        $this->method = self::methodFromType($type);
     }
 
     public function addFilter($name, $type, $callable, $description)
@@ -69,6 +77,11 @@ class ActionDefinition
         return $this;
     }
 
+    public function appendUrl($part)
+    {
+        $this->appendUrl = $part;
+    }
+
     public function findFilter($name)
     {
         foreach ($this->filters as $filter) {
@@ -78,6 +91,11 @@ class ActionDefinition
         }
 
         return null;
+    }
+
+    public function getAppendUrl()
+    {
+        return $this->appendUrl;
     }
 
     public function getCallable()
@@ -103,6 +121,11 @@ class ActionDefinition
     public function getInputs()
     {
         return $this->inputs;
+    }
+
+    public function getMethod()
+    {
+        return $this->method;
     }
 
     /**
@@ -152,59 +175,20 @@ class ActionDefinition
         return $this->type;
     }
 
-    public function getTypeName()
-    {
-        switch ($this->getType()) {
-            case self::TYPE_COLLECTION:
-                return 'collection';
-
-            case self::TYPE_CREATE:
-                return 'create';
-
-            case self::TYPE_DELETE:
-                return 'delete';
-
-            case self::TYPE_INSTANCE:
-                return 'instance';
-
-            case self::TYPE_UPDATE:
-                return 'update';
-        }
-
-        return 'unknown';
-    }
-
     public function getUrl()
     {
-        $url = $this->definition->getUrl();
         $tokens = $this->getTokens();
-        $tokenNames = [];
+        $parts = [];
 
         foreach ($tokens as $token) {
-            $tokenNames[] = sprintf('{%s}', $token->getName());
+            $parts[] = sprintf('{%s}', $token->getName());
         }
 
-        return Helper::makeUrl($url, $tokenNames);
-    }
-
-    public function getVerb()
-    {
-        switch ($this->type) {
-            case ActionDefinition::TYPE_COLLECTION:
-            case ActionDefinition::TYPE_INSTANCE:
-                return 'GET';
-
-            case ActionDefinition::TYPE_CREATE:
-                return 'POST';
-
-            case ActionDefinition::TYPE_DELETE:
-                return 'DELETE';
-
-            case ActionDefinition::TYPE_UPDATE:
-                return 'PUT';
+        if (mb_strlen($this->appendUrl) > 0) {
+            $parts[] = $this->appendUrl;
         }
 
-        return 'GET';
+        return $this->getDefinition()->getUrl($parts);
     }
 
     public function setDescription($value)
@@ -212,6 +196,11 @@ class ActionDefinition
         $this->description = $value;
 
         return $this;
+    }
+
+    public function setMethod($method)
+    {
+        $this->method = $method;
     }
 
     /**
@@ -230,5 +219,21 @@ class ActionDefinition
         $this->summary = $value;
 
         return $this;
+    }
+
+    private static function methodFromType($type)
+    {
+        switch ($type) {
+            case ActionDefinition::TYPE_CREATE:
+                return Request::METHOD_POST;
+
+            case ActionDefinition::TYPE_DELETE:
+                return Request::METHOD_DELETE;
+
+            case ActionDefinition::TYPE_UPDATE:
+                return Request::METHOD_DELETE;
+        }
+
+        return Request::METHOD_GET;
     }
 }

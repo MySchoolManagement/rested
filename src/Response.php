@@ -22,6 +22,7 @@ abstract class Response extends Hal
 
             $fields = [];
             $model = $action->getModel();
+            $uri = $this->getUri();
 
             foreach ($model->getFields() as $field) {
                 if ($field->isModel() === false) {
@@ -34,10 +35,15 @@ abstract class Response extends Hal
                 ];
             }
 
+            // TODO: fix this
+            if ($action->getType() === ActionDefinition::TYPE_INSTANCE_ACTION) {
+                $uri = Helper::makeUrl($uri, $action->getAppendUrl());
+            }
+
             $this->data['_actions'][] = [
                 'name' => $action->getName(),
-                'href' => $this->getUri(),
-                'method' => $action->getVerb(),
+                'href' => $uri,
+                'method' => $action->getMethod(),
                 'type' => 'application/json',
                 'fields' => $fields,
             ];
@@ -86,6 +92,7 @@ class InstanceResponse extends Response
 
         $this->addActions($resource, [
             ActionDefinition::TYPE_DELETE,
+            ActionDefinition::TYPE_INSTANCE_ACTION,
             ActionDefinition::TYPE_UPDATE
         ]);
     }

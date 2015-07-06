@@ -196,6 +196,10 @@ class Helper
             }
         }
 
+        $expanded = array_filter($expanded, function($x) {
+            return (mb_strlen($x) > 0);
+        });
+
         $u = join('/', $expanded);
         $u = mb_strtolower($u);
 
