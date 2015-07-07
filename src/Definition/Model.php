@@ -3,7 +3,6 @@ namespace Rested\Definition;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Nocarrier\Hal;
-use Rested\Response;
 use Rested\Security\AccessVoter;
 
 /**
@@ -31,6 +30,8 @@ class Model
     private $class;
 
     private $fields = [];
+
+    private $links = [];
 
     private $primaryKeyField = 'uuid';
 
@@ -65,9 +66,16 @@ class Model
      *
      * @return \Rested\Definition\InstanceDefinition Self
      */
-    public function add($name, $type, $getter, $setter, $description, $validationParameters = null)
+    public function add($name, $type, $getter, $setter, $description, $validationParameters = null, $rel = null)
     {
-        $this->fields[] = new Field($this, $name, $getter, $setter, $description, $type, $validationParameters);
+        $this->fields[] = new Field($this, $name, $getter, $setter, $description, $type, $validationParameters, $rel);
+
+        return $this;
+    }
+
+    public function addLink($routeName, $rel)
+    {
+        $this->links[$rel] = $routeName;
 
         return $this;
     }
@@ -207,9 +215,9 @@ class Model
      *
      * @return \Rested\Definition\InstanceDefinition Self
      */
-    public function setField($name, $type, $getter, $setter, $description, $validationParameters = null)
+    public function setField($name, $type, $getter, $setter, $description, $validationParameters = null, $rel = null)
     {
-        $this->add($name, $type, $getter, $setter, $description, $validationParameters);
+        $this->add($name, $type, $getter, $setter, $description, $validationParameters, $rel);
 
         return $this;
     }
@@ -252,7 +260,8 @@ class Model
             }
         }
 
-        return Response::createInstance($resource, $href, $e);
+        // FIXME
+        return $this->getDefinition()->getResource()->getFactory()->createInstanceResponse($resource, $href, $e);
     }
 
     public function exportAll($instance, $expand = true)
@@ -289,5 +298,10 @@ class Model
     public function getDefiningClass()
     {
         return $this->class;
+    }
+
+    public function getLinks()
+    {
+        return $this->links;
     }
 }

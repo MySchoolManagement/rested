@@ -14,8 +14,9 @@ class Field
     private $setter;
     private $type;
     private $validationParameters;
+    private $rel;
 
-    public function __construct(Model $model, $name, $getter, $setter, $description, $type, $validationParameters = null)
+    public function __construct(Model $model, $name, $getter, $setter, $description, $type, $validationParameters = null, $rel = null)
     {
         $this->getter = $getter;
         $this->setter = $setter;
@@ -24,6 +25,7 @@ class Field
         $this->name = $name;
         $this->type = $type;
         $this->validationParameters = $validationParameters;
+        $this->rel = $rel;
     }
 
     /**
@@ -34,6 +36,11 @@ class Field
     public function getGetter()
     {
         return $this->getter;
+    }
+
+    public function getRel()
+    {
+        return $this->rel;
     }
 
     /**
