@@ -4,6 +4,7 @@ namespace Rested\Definition;
 use Rested\Context;
 use Rested\Definition\Mapping;
 use Rested\Helper;
+use Rested\Security\AccessVoter;
 use Rested\Traits\ExportTrait;
 use Symfony\Component\HttpFoundation\Request;
 

@@ -148,6 +148,15 @@ class Model
         });
     }
 
+    public function filterFiltersForAccess()
+    {
+        $user = $this->getUser();
+
+        return array_filter($this->filters, function($filter) use ($user) {
+            return $user->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
+        });
+    }
+
     public function findField($name)
     {
         foreach ($this->fields as $field) {

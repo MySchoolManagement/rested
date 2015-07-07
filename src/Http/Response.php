@@ -72,7 +72,7 @@ abstract class Response extends Hal
         if ($action !== null) {
             $model = $action->getModel();
 
-            foreach ($model->getFilters() as $filter) {
+            foreach ($model->filterFiltersForAccess() as $filter) {
                 $filters[$filter->getName()] = [
                     'token' => sprintf('filters[%s]', $filter->getName()),
                     'type' => $filter->getType(),

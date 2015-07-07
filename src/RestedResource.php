@@ -1,6 +1,7 @@
 <?php
 namespace Rested;
 
+use Illuminate\Support\Facades\Auth;
 use Rested\Security\AccessVoter;
 use Rested\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -270,7 +271,7 @@ trait RestedResource
      */
     public function getUser()
     {
-        return $this->getContext()->getRequest()->user();
+        return Auth::user();
     }
 
     public function validate()
