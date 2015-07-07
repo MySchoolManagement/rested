@@ -74,6 +74,7 @@ abstract class Response extends Hal
 
             foreach ($model->getFilters() as $filter) {
                 $filters[$filter->getName()] = [
+                    'token' => sprintf('filters[%s]', $filter->getName()),
                     'type' => $filter->getType(),
                 ];
             }
