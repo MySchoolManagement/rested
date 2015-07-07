@@ -6,6 +6,7 @@ use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Field;
 use Rested\FactoryInterface;
+use Rested\Helper;
 use Rested\RestedResourceInterface;
 use Rested\UrlGeneratorInterface;
 

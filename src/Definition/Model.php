@@ -115,8 +115,6 @@ class Model
             $obj->setLocale($locale);
         }
 
-        $isEloquent = $obj instanceof EloquentModel;
-
         // TODO: should we throw an exception when data is supplied for a field that cannot be set?
         foreach ($data as $key => $value) {
             if (($field = $this->findField($key)) !== null) {
@@ -125,18 +123,24 @@ class Model
                         continue;
                     }
 
-                    $setter = $field->getSetter();
-
-                    if ($isEloquent === true) {
-                        $obj->setAttribute($setter, $value);
-                    } else {
-                        $obj->{$setter}($value);
-                    }
+                    $this->applyField($obj, $field, $value);
                 }
             }
         }
 
         return $obj;
+    }
+
+    public function applyField($instance, Field $field, $value)
+    {
+        $isEloquent = $instance instanceof EloquentModel;
+        $setter = $field->getSetter();
+
+        if ($isEloquent === true) {
+            $instance->setAttribute($setter, $value);
+        } else {
+            $instance->{$setter}($value);
+        }
     }
 
     public function filterFieldsForAccess($operation)

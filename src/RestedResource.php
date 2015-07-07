@@ -169,11 +169,16 @@ trait RestedResource
 
     public function getCurrentAction()
     {
-        if (($action = $this->getDefinition()->findAction($this->currentActionType)) !== null) {
+        if (($action = $this->getDefinition()->findAction($this->getCurrentActionType())) !== null) {
             return $action;
         }
 
         return null;
+    }
+
+    public function getCurrentActionType()
+    {
+        return $this->currentActionType;
     }
 
     public function getCurrentActionUri()
@@ -282,7 +287,7 @@ trait RestedResource
             $request = $this->getContext()->getRequest();
             $rules = [];
 
-            foreach ($model->getFields() as $field) {
+            foreach ($model->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
                 if ($field->isModel() === true) {
                     $parameters = $field->getValidationParameters();
 
