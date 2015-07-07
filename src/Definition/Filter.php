@@ -8,23 +8,19 @@ class Filter
 
     private $description;
 
-    private $mapping;
-
     private $model;
 
     private $name;
 
     private $required;
 
-    private $requiredPermission;
-
     private $type;
 
-    public function __construct(Mapping $mapping, $name, $callable, $description, $type)
+    public function __construct(Model $model, $name, $callable, $description, $type)
     {
         $this->callable = $callable;
         $this->description = $description;
-        $this->mapping = $mapping;
+        $this->model = $model;
         $this->name = $name;
         $this->type = $type;
     }
@@ -34,9 +30,9 @@ class Filter
         return $this->callable;
     }
 
-    public function getMapping()
+    public function getModel()
     {
-        return $this->mapping;
+        return $this->model;
     }
 
     public function getName()
@@ -47,20 +43,6 @@ class Filter
     public function getDescription()
     {
         return $this->description;
-    }
-
-    public function getRequiredPermission()
-    {
-        if ($this->requiredPermission !== null) {
-            return $this->requiredPermission;
-        }
-
-        /*$this->requiredPermission = sprintf('ROLE_FILTER_%s_%s',
-			Util::formatPermissionString($this->getMapping()->getDefiningClass()),
-			Util::formatPermissionString($this->getName()
-		));*/
-
-        return $this->requiredPermission;
     }
 
     public function getType()

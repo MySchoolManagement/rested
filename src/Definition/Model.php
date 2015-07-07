@@ -31,6 +31,8 @@ class Model
 
     private $fields = [];
 
+    private $filters = [];
+
     private $links = [];
 
     private $primaryKeyField = 'uuid';
@@ -69,6 +71,13 @@ class Model
     public function add($name, $type, $getter, $setter, $description, $validationParameters = null, $rel = null)
     {
         $this->fields[] = new Field($this, $name, $getter, $setter, $description, $type, $validationParameters, $rel);
+
+        return $this;
+    }
+
+    public function addFilter($name, $type, $callable, $description)
+    {
+        $this->filters[] = new Filter($this, $name, $callable, $description, $type);
 
         return $this;
     }
@@ -156,6 +165,14 @@ class Model
     public function getFields()
     {
         return $this->fields;
+    }
+
+    /**
+     * @return \Rested\Definition\Filter[]
+     */
+    public function getFilters()
+    {
+        return $this->filters;
     }
 
     /**

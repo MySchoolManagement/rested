@@ -14,6 +14,11 @@ interface FactoryInterface
     public function createBasicController($class);
 
     /**
+     * @return Rested\RestedResourceInterface
+     */
+    public function createBasicControllerFromRouteName($routeName);
+
+    /**
      * @return Rested\CollectionResponse
      */
     public function createCollectionResponse(RestedResourceInterface $resource, array $items = [], $total = 0);

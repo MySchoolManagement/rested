@@ -139,6 +139,17 @@ class ResourceDefinition
         return null;
     }
 
+    public function findActionByRouteName($routeName)
+    {
+        foreach ($this->actions as $action) {
+            if ($action->getRouteName() === $routeName) {
+                return $action;
+            }
+        }
+
+        return null;
+    }
+
     public function getActions()
     {
         return $this->actions;

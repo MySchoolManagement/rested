@@ -33,6 +33,15 @@ class Helper
             ];
 
             return $roles;
+        } else if ($class === 'Rested\Definition\Filter') {
+            $endpoint = $object->getModel()->getDefinition()->getEndpoint();
+
+            $roles = [
+                Helper::makeRoleName($endpoint, 'filter', $object->getName()),
+                Helper::makeRoleName($endpoint, 'filter', 'all'),
+            ];
+
+            return $roles;
         } else {
             throw new \InvalidArgumentException(get_class($object) . ' is not supported');
         }

@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Validator;
 trait RestedResource
 {
 
+    private $authorizationChecker;
+
     private $cacheDefinition;
 
     private $context;
@@ -29,6 +31,7 @@ trait RestedResource
     public function initRestedResource(UrlGeneratorInterface $urlGenerator = null,
         AuthorizationCheckerInterface $authorizationChecker = null, Request $request = null,$currentActionType = null)
     {
+        $this->authorizationChecker = $authorizationChecker;
         $this->currentActionType = $currentActionType;
         $this->urlGenerator = $urlGenerator;
 
@@ -50,6 +53,11 @@ trait RestedResource
      * @return Rested\Definition\ResourceDefinition
      */
     public abstract function createDefinition();
+
+    protected function getAuthorizationChecker()
+    {
+        return $this->authorizationChecker;
+    }
 
     /**
      * @return Rested\FactoryInterface
