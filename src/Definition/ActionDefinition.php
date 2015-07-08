@@ -232,7 +232,7 @@ class ActionDefinition
                 return Request::METHOD_DELETE;
 
             case ActionDefinition::TYPE_UPDATE:
-                return Request::METHOD_DELETE;
+                return Request::METHOD_PUT;
         }
 
         return Request::METHOD_GET;
