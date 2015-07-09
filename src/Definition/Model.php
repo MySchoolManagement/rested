@@ -104,7 +104,7 @@ class Model
     public function apply($locale, array $data, $obj = null)
     {
         $definition = $this->resourceDefinition;
-        $user = $definition->getResource()->getUser();
+        $authChecker = $definition->getResource()->getAuthorizationChecker();
 
         if ($obj === null) {
             $class = $this->getDefiningClass();
@@ -119,7 +119,7 @@ class Model
         foreach ($data as $key => $value) {
             if (($field = $this->findField($key)) !== null) {
                 if ($field->isModel() === true) {
-                    if ($user->isGranted(AccessVoter::ATTRIB_FIELD_SET, $field) === false) {
+                    if ($authChecker->isGranted(AccessVoter::ATTRIB_FIELD_SET, $field) === false) {
                         continue;
                     }
 
@@ -145,19 +145,19 @@ class Model
 
     public function filterFieldsForAccess($operation)
     {
-        $user = $this->getUser();
+        $authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
 
-        return array_filter($this->fields, function($field) use ($user, $operation) {
-            return $user->isGranted($operation, $field);
+        return array_filter($this->fields, function($field) use ($authChecker, $operation) {
+            return $authChecker->isGranted($operation, $field);
         });
     }
 
     public function filterFiltersForAccess()
     {
-        $user = $this->getUser();
+        $authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
 
-        return array_filter($this->filters, function($filter) use ($user) {
-            return $user->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
+        return array_filter($this->filters, function($filter) use ($authChecker) {
+            return $authChecker->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
         });
     }
 
@@ -255,14 +255,9 @@ class Model
     public function export($instance, $expand = true, $forceAllFields = false)
     {
         $e = [];
-        $href = '';
         $resource = $this->resourceDefinition->getResource();
-        $context = $resource->getContext();
-
-        // add href if we have a context
-        if ($context !== null) {
-            $href = $context->getResource()->createInstanceHref($instance);
-        }
+        $context = $resource->getCurrentContext();
+        $href = $resource->createInstanceHref($instance);
 
         if ($expand === true) {
             $fields = $this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_GET);
@@ -291,7 +286,7 @@ class Model
         }
 
         // FIXME
-        return $this->getDefinition()->getResource()->getFactory()->createInstanceResponse($resource, $href, $e);
+        return $resource->getFactory()->createInstanceResponse($resource, $href, $e);
     }
 
     public function exportAll($instance, $expand = true)

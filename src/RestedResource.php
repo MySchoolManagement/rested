@@ -19,49 +19,40 @@ use Illuminate\Support\Facades\Validator;
 trait RestedResource
 {
 
-    private $authorizationChecker;
+    protected $authorizationChecker;
 
     private $cacheDefinition;
 
-    private $context;
+    protected $urlGenerator;
 
-    private $currentActionType;
-
-    private $urlGenerator;
-
-    public function initRestedResource(UrlGeneratorInterface $urlGenerator = null,
-        AuthorizationCheckerInterface $authorizationChecker = null, Request $request = null,$currentActionType = null)
+    public function handle()
     {
-        $this->authorizationChecker = $authorizationChecker;
-        $this->currentActionType = $currentActionType;
-        $this->urlGenerator = $urlGenerator;
+        $request = $this->getCurrentRequest();
+        $controller = $request->get('_rested_controller');
 
-        // if we're in the request scope then create a context
-        if (($authorizationChecker !== null) && ($request !== null)) {
-            $this->context = new RequestContext($request, $this);
-
-            if ($authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {
-                $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
-            }
-
-            if (in_array($request->getMethod(), ['PATCH', 'POST', 'PUT']) === true) {
-                $this->validate();
-            }
+        if ($this->authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {
+            $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
         }
+
+        if (in_array($request->getMethod(), ['PATCH', 'POST', 'PUT']) === true) {
+            $this->validate();
+        }
+
+        return call_user_func([$this, $controller]);
     }
 
     /**
-     * @return Rested\Definition\ResourceDefinition
+     * @return \Rested\Definition\ResourceDefinition
      */
     public abstract function createDefinition();
 
-    protected function getAuthorizationChecker()
+    public function getAuthorizationChecker()
     {
         return $this->authorizationChecker;
     }
 
     /**
-     * @return Rested\FactoryInterface
+     * @return \Rested\FactoryInterface
      */
     public abstract function getFactory();
 
@@ -100,11 +91,13 @@ trait RestedResource
      */
     public function applyFilters($queryBuilder, $applyLimits = true)
     {
+        $context = $this->getCurrentContext();
+
         if ($applyLimits == true) {
             if (is_subclass_of($queryBuilder, 'ModelCriteria') == true) {
                 $queryBuilder
-                    ->setLimit($this->getLimit())
-                    ->setOffset($this->getOffset());
+                    ->setLimit($context->getLimit())
+                    ->setOffset($context->getOffset());
             }
         }
 
@@ -162,9 +155,9 @@ trait RestedResource
     /**
      * @return \Rested\RequestContext
      */
-    public function getContext()
+    public function getCurrentContext()
     {
-        return $this->context;
+        return $this->getFactory()->resolveContextForRequest($this->getCurrentRequest(), $this);
     }
 
     public function getCurrentAction()
@@ -178,7 +171,7 @@ trait RestedResource
 
     public function getCurrentActionType()
     {
-        return $this->currentActionType;
+        return $this->getCurrentContext()->getActionType();
     }
 
     public function getCurrentActionUri()
@@ -192,35 +185,18 @@ trait RestedResource
 
     public function getCurrentModel()
     {
-        if (($action = $this->getDefinition()->findAction($this->currentActionType)) !== null) {
+        if (($action = $this->getDefinition()->findAction($this->getCurrentActionType())) !== null) {
             return $action->getModel();
         }
 
         return null;
     }
 
-    public function getFilter($name)
-    {
-        return $this
-            ->getContext()
-            ->getFilter($name)
-            ;
-    }
-
     public function getLocale()
     {
         return $this
-            ->getContext()
-            ->getRequest()
+            ->getCurrentRequest()
             ->getLocale()
-            ;
-    }
-
-    public function setFilter($name, $value)
-    {
-        return $this
-            ->getContext()
-            ->setFilter($name, $value)
             ;
     }
 
@@ -234,30 +210,6 @@ trait RestedResource
         }
 
         return ($this->cacheDefinition = $this->createDefinition());
-    }
-
-    public function getLimit()
-    {
-        return $this
-            ->getContext()
-            ->getLimit()
-            ;
-    }
-
-    public function getOffset()
-    {
-        return $this
-            ->getContext()
-            ->getOffset()
-            ;
-    }
-
-    public function getParameter($key)
-    {
-        return $this
-            ->getContext()
-            ->getParameter($key)
-            ;
     }
 
     public function createInstanceHref($instance)
@@ -274,17 +226,14 @@ trait RestedResource
      *
      * @return \App\User|null
      */
-    public function getUser()
-    {
-        return Auth::user();
-    }
+    public abstract function getUser();
 
     public function validate()
     {
         $model = $this->getCurrentModel();
 
         if ($model !== null) {
-            $request = $this->getContext()->getRequest();
+            $request = $this->getCurrentRequest();
             $rules = [];
 
             foreach ($model->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
@@ -318,21 +267,5 @@ trait RestedResource
                 ]);
             }
         }
-    }
-
-    public function wantsExpansion($name)
-    {
-        return $this
-            ->getContext()
-            ->wantsExpansion($name)
-            ;
-    }
-
-    public function wantsField($name)
-    {
-        return $this
-            ->getContext()
-            ->wantsField($name)
-            ;
     }
 }

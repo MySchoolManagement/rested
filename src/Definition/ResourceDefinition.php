@@ -118,10 +118,10 @@ class ResourceDefinition
 
     public function filterActionsForAccess()
     {
-        $user = $this->getResource()->getUser();
+        $authChecker = $this->getResource()->getAuthorizationChecker();
 
-        return array_filter($this->actions, function($action) use ($user) {
-            return $user->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $action);
+        return array_filter($this->actions, function($action) use ($authChecker) {
+            return $authChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $action);
         });
     }
 

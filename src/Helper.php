@@ -1,6 +1,8 @@
 <?php
 namespace Rested;
 
+use Symfony\Component\Security\Core\Role\Role;
+
 class Helper
 {
 
@@ -14,6 +16,7 @@ class Helper
     public static function createRolesForObject($attribute, $object)
     {
         $class = is_string($object) ? $object : get_class($object);
+        $roles = [];
 
         if ($class === 'Rested\Definition\ActionDefinition') {
             $endpoint = $object->getDefinition()->getEndpoint();
@@ -21,7 +24,7 @@ class Helper
             $loose = Helper::makeRoleName($endpoint);
             $specific = Helper::makeRoleName($endpoint, $name);
 
-            return [$loose, $specific];
+            $roles =  [$loose, $specific];
         } else if ($class === 'Rested\Definition\Field') {
             $endpoint = $object->getModel()->getDefinition()->getEndpoint();
 
@@ -31,8 +34,6 @@ class Helper
                 Helper::makeRoleName($endpoint, 'field', 'all'),
                 Helper::makeRoleName($endpoint, 'field', 'all', $attribute),
             ];
-
-            return $roles;
         } else if ($class === 'Rested\Definition\Filter') {
             $endpoint = $object->getModel()->getDefinition()->getEndpoint();
 
@@ -40,13 +41,15 @@ class Helper
                 Helper::makeRoleName($endpoint, 'filter', $object->getName()),
                 Helper::makeRoleName($endpoint, 'filter', 'all'),
             ];
-
-            return $roles;
         } else {
             throw new \InvalidArgumentException(get_class($object) . ' is not supported');
         }
 
-        return [];
+        foreach ($roles as $idx => $role) {
+            $roles[$idx] = new Role($role);
+        }
+
+        return $roles;
     }
 
     public static function makeRoleName()

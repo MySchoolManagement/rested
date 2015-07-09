@@ -22,8 +22,17 @@ class RequestContext
     {
         $this->resource = $resource;
         $this->request = $request;
+        $this->actionType = $request->get('_rested_action');
 
         $this->init();
+    }
+
+    /**
+     * @return string
+     */
+    public function getActionType()
+    {
+        return $this->actionType;
     }
 
     public function getFields()
