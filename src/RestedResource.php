@@ -38,7 +38,7 @@ trait RestedResource
             $this->validate();
         }
 
-        return call_user_func([$this, $controller]);
+        return call_user_func([$this, $controller], func_get_args());
     }
 
     /**
