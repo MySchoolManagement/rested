@@ -154,7 +154,9 @@ class Model
 
     public function filterFiltersForAccess()
     {
-        $authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
+        //$authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
+        // FIXME:
+        $authChecker = app('security.authorization_checker');
 
         return array_filter($this->filters, function($filter) use ($authChecker) {
             return $authChecker->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
