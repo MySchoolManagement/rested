@@ -30,8 +30,10 @@ trait RestedResource
         $request = $this->getCurrentRequest();
         $controller = $request->get('_rested_controller');
 
-        if ($this->authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {
-            $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
+        if ($this->authorizationChecker !== null) {
+            if ($this->authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {
+                $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
+            }
         }
 
         if (in_array($request->getMethod(), ['PATCH', 'POST', 'PUT']) === true) {
