@@ -26,6 +26,8 @@ class ActionDefinition
 
     private $callable;
 
+    private $contentType = 'application/json';
+
     private $description;
 
     private $method;
@@ -192,6 +194,13 @@ class ActionDefinition
         return $this->getDefinition()->getUrl($parts);
     }
 
+    public function setContentType($type)
+    {
+        $this->contentType = $type;
+
+        return $this;
+    }
+
     public function setDescription($value)
     {
         $this->description = $value;
@@ -202,6 +211,8 @@ class ActionDefinition
     public function setMethod($method)
     {
         $this->method = $method;
+
+        return $this;
     }
 
     /**
