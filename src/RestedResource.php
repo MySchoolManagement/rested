@@ -37,7 +37,7 @@ trait RestedResource
         }
 
         if (in_array($request->getMethod(), ['PATCH', 'POST', 'PUT']) === true) {
-            $this->validate();
+            $this->validate($request);
         }
 
         return call_user_func([$this, $controller], func_get_args());
@@ -226,12 +226,11 @@ trait RestedResource
      */
     public abstract function getUser();
 
-    public function validate()
+    public function validate(Request $request)
     {
         $model = $this->getCurrentModel();
 
         if ($model !== null) {
-            $request = $this->getCurrentRequest();
             $rules = [];
 
             foreach ($model->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
