@@ -136,10 +136,10 @@ trait RestedResource
     }
 
 
-    public function export($instance)
+    public function export($instance, $all = false)
     {
         if (($model = $this->getDefinition()->getModel()) !== null) {
-            return $model->export($instance);
+            return $all ? $model->exportAll($instance) : $model->export($instance);
         }
 
         return null;
@@ -147,11 +147,7 @@ trait RestedResource
 
     public function exportAll($instance)
     {
-        if (($model = $this->getDefinition()->getModel()) !== null) {
-            return $model->exportAll($instance);
-        }
-
-        return null;
+        return $this->export($instance, true);
     }
 
     /**
