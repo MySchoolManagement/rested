@@ -40,7 +40,7 @@ trait RestedResource
             $this->validate($request);
         }
 
-        return call_user_func([$this, $controller], func_get_args());
+        return call_user_func_array([$this, $controller], func_get_args());
     }
 
     /**
