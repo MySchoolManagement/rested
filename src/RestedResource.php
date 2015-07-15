@@ -14,7 +14,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Illuminate\Support\Facades\Validator;
 
 trait RestedResource
 {
@@ -229,40 +228,12 @@ trait RestedResource
     public function validate(Request $request)
     {
         $model = $this->getCurrentModel();
+        $messages = $model->validate($request);
 
-        if ($model !== null) {
-            $rules = [];
-
-            foreach ($model->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
-                if ($field->isModel() === true) {
-                    $parameters = $field->getValidationParameters();
-
-                    // add a validator for the data type of this field
-                    $parameters .= '|' . $field->getTypeValidatorName();
-
-                    $rules[$field->getName()] = $parameters;
-                }
-            }
-
-            $validator = Validator::make($request->json()->all(), $rules);
-
-            if ($validator->fails() === true) {
-                $failed = $validator->failed();
-                $messages = $validator->messages();;
-                $responseMessages = [];
-
-                foreach ($failed as $field => $rules) {
-                    $responseMessages[$field] = [];
-
-                    foreach ($rules as $rule => $parameters) {
-                        $responseMessages[$field][$rule] = $messages->first($field);
-                    }
-                }
-
-                $this->abort(422, [
-                    'validation_messages' => $responseMessages
-                ]);
-            }
+        if (sizeof($messages) > 0) {
+            $this->abort(HttpResponse::HTTP_UNPROCESSABLE_ENTITY, [
+                'validation_messages' => $messages,
+            ]);
         }
     }
 }

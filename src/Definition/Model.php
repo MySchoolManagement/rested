@@ -2,8 +2,10 @@
 namespace Rested\Definition;
 
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Support\Facades\Validator;
 use Nocarrier\Hal;
 use Rested\Security\AccessVoter;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Maps an external representation of a resource to an actual object.
@@ -330,5 +332,40 @@ class Model
     public function getLinks()
     {
         return $this->links;
+    }
+
+    public function validate(Request $request)
+    {
+        $rules = [];
+        $messages = [];
+
+        foreach ($this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
+            if ($field->isModel() === true) {
+                $parameters = $field->getValidationParameters();
+
+                // add a validator for the data type of this field
+                $parameters .= '|' . $field->getTypeValidatorName();
+
+                $rules[$field->getName()] = $parameters;
+            }
+        }
+
+        $validator = Validator::make($request->json()->all(), $rules);
+
+        if ($validator->fails() === true) {
+            $failed = $validator->failed();
+            $validationMessages = $validator->messages();;
+            $messages = [];
+
+            foreach ($failed as $field => $rules) {
+                $messages[$field] = [];
+
+                foreach ($rules as $rule => $parameters) {
+                    $messages[$field][$rule] = $validationMessages->first($field);
+                }
+            }
+        }
+
+        return $messages;
     }
 }
