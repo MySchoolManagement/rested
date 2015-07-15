@@ -194,6 +194,13 @@ class ActionDefinition
         return $this->getDefinition()->getUrl($parts);
     }
 
+    public function setCallable($method)
+    {
+        $this->callable = $method;
+
+        return $this;
+    }
+
     public function setContentType($type)
     {
         $this->contentType = $type;
