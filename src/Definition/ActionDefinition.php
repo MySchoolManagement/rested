@@ -117,6 +117,11 @@ class ActionDefinition
         return $this->callable;
     }
 
+    public function getContentType()
+    {
+        return $this->contentType;
+    }
+
     public function getDefinition()
     {
         return $this->definition;

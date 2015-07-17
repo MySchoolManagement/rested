@@ -121,7 +121,7 @@ abstract class Response extends Hal
             'name' => $action->getName(),
             'href' => $uri,
             'method' => $action->getMethod(),
-            'type' => 'application/json',
+            'type' => $action->getContentType(),
             'fields' => $fields
         ];
 
