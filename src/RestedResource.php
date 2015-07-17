@@ -28,6 +28,7 @@ trait RestedResource
     {
         $request = $this->getCurrentRequest();
         $controller = $request->get('_rested_controller');
+        $action = $this->getCurrentAction();
 
         if ($this->authorizationChecker !== null) {
             if ($this->authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {

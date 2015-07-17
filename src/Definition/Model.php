@@ -41,6 +41,8 @@ class Model
 
     private $resourceDefinition;
 
+    private $customFieldFilter = null;
+
     /**
      * Constructor
      *
@@ -148,10 +150,11 @@ class Model
     public function filterFieldsForAccess($operation)
     {
         $authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
-
-        return array_filter($this->fields, function($field) use ($authChecker, $operation) {
+        $fields = array_filter($this->fields, function($field) use ($authChecker, $operation) {
             return $authChecker->isGranted($operation, $field);
         });
+
+        return $this->runCustomFieldFilter($fields, $operation);
     }
 
     public function filterFiltersForAccess()
@@ -290,7 +293,7 @@ class Model
         }
 
         // FIXME
-        return $resource->getFactory()->createInstanceResponse($resource, $href, $e);
+        return $resource->getFactory()->createInstanceResponse($resource, $href, $e, $instance);
     }
 
     public function exportAll($instance, $expand = true)
@@ -332,6 +335,20 @@ class Model
     public function getLinks()
     {
         return $this->links;
+    }
+
+    public function runCustomFieldFilter(array $fields, $operation, $instance = null)
+    {
+        if ($this->customFieldFilter !== null) {
+            $fields = call_user_func_array($this->customFieldFilter, [$this, $fields, $operation, $instance]);
+        }
+
+        return $fields;
+    }
+
+    public function setCustomFieldFilter($closure)
+    {
+        $this->customFieldFilter = $closure;
     }
 
     public function validate(Request $request)

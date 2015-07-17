@@ -8,7 +8,9 @@ use Rested\Definition\Field;
 use Rested\FactoryInterface;
 use Rested\Helper;
 use Rested\RestedResourceInterface;
+use Rested\Security\AccessVoter;
 use Rested\UrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 abstract class Response extends Hal
 {
@@ -27,10 +29,10 @@ abstract class Response extends Hal
         $this->addLink('self', $uri);
     }
 
-    protected function addActions(RestedResourceInterface $resource, array $which)
+    protected function addActions(RestedResourceInterface $resource, array $which, $instance = null)
     {
         $def = $resource->getDefinition();
-        $actions = $def->filterActionsForAccess();
+        $actions = $def->filterActionsForAccess($instance);
         $links = [];
 
         $this->data['_actions'] = [];
@@ -44,7 +46,7 @@ abstract class Response extends Hal
                 continue;
             }
 
-            $links = array_merge($links, $this->addAction($action));
+            $links = array_merge($links, $this->addAction($action, $instance));
         }
 
         foreach ($links as $rel => $route) {
@@ -92,14 +94,16 @@ abstract class Response extends Hal
         }
     }
 
-    private function addAction(ActionDefinition $action)
+    private function addAction(ActionDefinition $action, $instance = null)
     {
         $model = $action->getModel();
         $uri = $this->getUri();
         $fields = [];
         $links = [];
+        $operation = $action->getMethod() === Request::METHOD_GET ? AccessVoter::ATTRIB_FIELD_GET : AccessVoter::ATTRIB_FIELD_SET;
+        $modelFields = $model->runCustomFieldFilter($model->getFields(), $operation, $instance);
 
-        foreach ($model->getFields() as $field) {
+        foreach ($modelFields as $field) {
             if ($field->isModel() === false) {
                 continue;
             }

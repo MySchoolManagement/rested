@@ -18,6 +18,8 @@ class ActionDefinition
     const TYPE_INSTANCE_ACTION = 'instance_action';
     const TYPE_UPDATE = 'update';
 
+    private $affordanceChecker;
+
     private $appendUrl;
 
     private $definition;
@@ -83,6 +85,15 @@ class ActionDefinition
     public function appendUrl($part)
     {
         $this->appendUrl = $part;
+    }
+
+    public function checkAffordance($instance = null)
+    {
+        if ($this->affordanceChecker === null) {
+            return true;
+        }
+
+        return call_user_func_array($this->affordanceChecker, [$instance]);
     }
 
     public function findFilter($name)
@@ -192,6 +203,13 @@ class ActionDefinition
         }
 
         return $this->getDefinition()->getUrl($parts);
+    }
+
+    public function setAffordanceChecker($callback)
+    {
+        $this->affordanceChecker = $callback;
+
+        return $this;
     }
 
     public function setCallable($method)

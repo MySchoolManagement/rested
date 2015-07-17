@@ -30,7 +30,7 @@ interface FactoryInterface
     /**
      * @return \Rested\InstanceResponse
      */
-    public function createInstanceResponse(RestedResourceInterface $resource, $href, $item);
+    public function createInstanceResponse(RestedResourceInterface $resource, $href, $item, $instance = null);
 
     /**
      * return \Rested\Definition\Model
