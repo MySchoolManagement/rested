@@ -12,6 +12,8 @@ class RequestContext
 
     private $resource;
 
+    private $routeName;
+
     private $parameters = [
         'embeddables' => [],
         'fields' => [],
@@ -23,6 +25,7 @@ class RequestContext
         $this->resource = $resource;
         $this->request = $request;
         $this->actionType = $request->get('_rested_action');
+        $this->routeName = $request->get('_rested_route_name');
 
         $this->init();
     }
@@ -57,6 +60,11 @@ class RequestContext
         }
 
         return null;
+    }
+
+    public function getRouteName()
+    {
+        return $this->routeName;
     }
 
     public function setFields(array $fields)

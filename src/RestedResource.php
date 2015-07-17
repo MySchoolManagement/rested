@@ -31,7 +31,7 @@ trait RestedResource
         $action = $this->getCurrentAction();
 
         if ($this->authorizationChecker !== null) {
-            if ($this->authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $this->getCurrentAction()) === false) {
+            if ($this->authorizationChecker->isGranted(AccessVoter::ATTRIB_ACTION_ACCESS, $action) === false) {
                 $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
             }
         }
@@ -160,7 +160,7 @@ trait RestedResource
 
     public function getCurrentAction()
     {
-        if (($action = $this->getDefinition()->findAction($this->getCurrentActionType())) !== null) {
+        if (($action = $this->getDefinition()->findActionByRouteName($this->getCurrentContext()->getRouteName())) !== null) {
             return $action;
         }
 
@@ -183,7 +183,9 @@ trait RestedResource
 
     public function getCurrentModel()
     {
-        if (($action = $this->getDefinition()->findAction($this->getCurrentActionType())) !== null) {
+        $routeName = $this->getCurrentContext()->getRouteName();
+
+        if (($action = $this->getDefinition()->findActionByRouteName($routeName)) !== null) {
             return $action->getModel();
         }
 
