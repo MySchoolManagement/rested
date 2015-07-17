@@ -114,7 +114,7 @@ abstract class Response extends Hal
 
         // TODO: fix this
         if ($action->getType() === ActionDefinition::TYPE_INSTANCE_ACTION) {
-            $uri = Helper::makeUrl($uri, $action->getAppendUrl());
+            $uri = $uri . '/' . $action->getAppendUrl();//Helper::makeUrl($uri, $action->getAppendUrl());
         }
 
         $this->data['_actions'][] = [
