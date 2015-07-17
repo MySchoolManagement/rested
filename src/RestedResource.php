@@ -231,7 +231,7 @@ trait RestedResource
     public function validate(Request $request)
     {
         $model = $this->getCurrentModel();
-        $messages = $model->validate($request);
+        $messages = $model->validate($this->extractDataFromRequest($request));
 
         if (sizeof($messages) > 0) {
             $this->abort(HttpResponse::HTTP_UNPROCESSABLE_ENTITY, [

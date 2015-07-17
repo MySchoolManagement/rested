@@ -351,7 +351,7 @@ class Model
         $this->customFieldFilter = $closure;
     }
 
-    public function validate(Request $request)
+    public function validate(array $data)
     {
         $rules = [];
         $messages = [];
@@ -367,7 +367,7 @@ class Model
             }
         }
 
-        $validator = Validator::make($request->json()->all(), $rules);
+        $validator = Validator::make($data, $rules);
 
         if ($validator->fails() === true) {
             $failed = $validator->failed();
