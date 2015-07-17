@@ -127,7 +127,7 @@ trait RestedResource
         return $queryBuilder;
     }
 
-    public function done(Response $response = null, $statusCode = HttpResponse::HTTP_OK, $headers = [])
+    public function done(Hal $response = null, $statusCode = HttpResponse::HTTP_OK, $headers = [])
     {
         $headers = array_merge(['content-type' => 'application/json'], $headers);
         $json = $response ? $response->asJson($this) : '';
