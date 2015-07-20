@@ -79,7 +79,7 @@ class Parameter
                 return 'date_format:Y-m-d';
 
             case self::TYPE_DATETIME:
-                return sprintf('date_format:%s'. \DateTime::ISO8601);
+                return sprintf('date_format:%s', \DateTime::ISO8601);
 
             case self::TYPE_INT:
                 return 'numeric';
