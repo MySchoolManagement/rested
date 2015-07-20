@@ -263,7 +263,7 @@ class Model
     {
         $e = [];
         $resource = $this->resourceDefinition->getResource();
-        $context = $resource->getCurrentContext();
+        $context = $forceAllFields ? null : $resource->getCurrentContext();
         $href = $resource->createInstanceHref($instance);
 
         if ($expand === true) {
