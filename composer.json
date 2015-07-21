@@ -6,12 +6,6 @@
         "php": ">=5.5.9",
         "nocarrier/hal": "dev-master"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/iainmckay/hal"
-        }
-    ],
     "autoload": {
         "psr-4": { "Rested\\": "src" }
     },

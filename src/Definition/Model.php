@@ -182,7 +182,7 @@ class Model
             // FIXME:
             $authChecker = app('security.authorization_checker');
 
-            $filters array_filter(
+            $filters = array_filter(
                 $this->filters,
                 function ($filter) use ($authChecker) {
                     return $authChecker->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
