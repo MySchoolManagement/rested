@@ -43,6 +43,13 @@ class Model
 
     private $customFieldFilter = null;
 
+    private $cacheFilteredFieldsForAccess = [
+        AccessVoter::ATTRIB_FIELD_GET => null,
+        AccessVoter::ATTRIB_FIELD_SET => null,
+    ];
+
+    private $cacheFilteredFiltersForAccess = null;
+
     /**
      * Constructor
      *
@@ -149,23 +156,43 @@ class Model
 
     public function filterFieldsForAccess($operation)
     {
-        $authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
-        $fields = array_filter($this->fields, function($field) use ($authChecker, $operation) {
-            return $authChecker->isGranted($operation, $field);
-        });
+        if ($this->cacheFilteredFieldsForAccess[$operation] !== null) {
+            $fields = $this->cacheFilteredFieldsForAccess[$operation];
+        } else {
+            $authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
+            $fields = array_filter(
+                $this->fields,
+                function ($field) use ($authChecker, $operation) {
+                    return $authChecker->isGranted($operation, $field);
+                }
+            );
+
+            $this->cacheFilteredFieldsForAccess[$operation] = $fields;
+        }
 
         return $this->runCustomFieldFilter($fields, $operation);
     }
 
     public function filterFiltersForAccess()
     {
-        //$authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
-        // FIXME:
-        $authChecker = app('security.authorization_checker');
+        if ($this->cacheFilteredFiltersForAccess !== null) {
+            $filters = $this->cacheFilteredFiltersForAccess;
+        } else {
+            //$authChecker = $this->getDefinition()->getResource()->getAuthorizationChecker();
+            // FIXME:
+            $authChecker = app('security.authorization_checker');
 
-        return array_filter($this->filters, function($filter) use ($authChecker) {
-            return $authChecker->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
-        });
+            $filters array_filter(
+                $this->filters,
+                function ($filter) use ($authChecker) {
+                    return $authChecker->isGranted(AccessVoter::ATTRIB_FILTER, $filter);
+                }
+            );
+
+            $this->cacheFilteredFiltersForAccess = $filters;
+        }
+
+        return $filters;
     }
 
     public function findField($name)
