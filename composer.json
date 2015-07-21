@@ -4,7 +4,7 @@
     "keywords": ["rest"],
     "require": {
         "php": ">=5.5.9",
-        "nocarrier/hal": "*"
+        "nocarrier/hal": "dev-master"
     },
     "repositories": [
         {
