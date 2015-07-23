@@ -1,52 +1,70 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Transforms\TransformMappingInterface;
+
 class Filter
 {
 
-    private $callable;
+    const SECURITY_ATTRIBUTE = 'rested_filter';
 
-    private $description;
+    /**
+     * @var callable
+     */
+    protected $callback;
 
-    private $model;
+    /**
+     * @var string
+     */
+    protected $dataType;
 
-    private $name;
+    /**
+     * @var string
+     */
+    protected $description;
 
-    private $required;
+    /**
+     * @var string
+     */
+    protected $name;
 
-    private $type;
-
-    public function __construct(Model $model, $name, $callable, $description, $type)
+    public function __construct($name, $callback, $description, $dataType)
     {
-        $this->callable = $callable;
+        $this->callback = $callback;
+        $this->dataType = $dataType;
         $this->description = $description;
-        $this->model = $model;
         $this->name = $name;
-        $this->type = $type;
     }
 
-    public function getCallable()
+    /**
+     * @return callable
+     */
+    public function getCallback()
     {
-        return $this->callable;
+        return $this->callback;
     }
 
-    public function getModel()
+    /**
+     * @return string
+     */
+    public function getDataType()
     {
-        return $this->model;
+        return $this->dataType;
     }
 
-    public function getName()
-    {
-        return $this->name;
-    }
-
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
-    public function getType()
+    /**
+     * @return string
+     */
+    public function getName()
     {
-        return $this->type;
+        return $this->name;
     }
 }

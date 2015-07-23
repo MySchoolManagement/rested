@@ -1,236 +1,282 @@
 <?php
 namespace Rested\Definition;
 
-use Rested\Context;
-use Rested\Definition\Mapping;
-use Rested\Helper;
-use Rested\Security\AccessVoter;
-use Rested\Traits\ExportTrait;
-use Symfony\Component\HttpFoundation\Request;
+use Rested\Transforms\TransformInterface;
+use Rested\Transforms\TransformMappingInterface;
+use Symfony\Component\HttpFoundation\Request as Request;
 
-class ActionDefinition
+class ActionDefinition implements ActionDefinitionInterface
 {
+
+    const SECURITY_ATTRIBUTE = 'rested_action';
 
     const TYPE_COLLECTION = 'collection';
     const TYPE_CREATE = 'create';
     const TYPE_DELETE = 'delete';
     const TYPE_INSTANCE = 'instance';
-    const TYPE_INSTANCE_ACTION = 'instance_action';
+    const TYPE_INSTANCE_AFFORDANCE = 'instance_affordance';
     const TYPE_UPDATE = 'update';
 
-    private $affordanceChecker;
+    /**
+     * @var callable
+     */
+    protected $affordanceAvailabilityCallback;
 
-    private $appendUrl;
+    /**
+     * @var string[]
+     */
+    protected $acceptedContentType = 'application/json';
 
-    private $definition;
+    /**
+     * @var string
+     */
+    protected $controllerName;
 
-    private $cacheRouteName;
+    /**
+     * @var \Rested\Transforms\TransformInterface
+     */
+    protected $defaultTransform;
 
-    private $callable;
+    /**
+     * @var \Rested\Transforms\TransformMappingInterface
+     */
+    protected $defaultTransformMapping;
 
-    private $contentType = 'application/json';
+    /**
+     * @var string
+     */
+    protected $description;
 
-    private $description;
+    /**
+     * @var string
+     */
+    protected $id;
 
-    private $method;
+    /**
+     * @var string
+     */
+    protected $httpMethod;
 
-    private $modelOverride;
+    /**
+     * @var \Rested\Definition\ResourceDefinitionInterface
+     */
+    protected $resourceDefinition;
 
-    private $name;
+    /**
+     * @var bool
+     */
+    protected $shouldAppendId;
 
-    private $summary;
+    /**
+     * @var string
+     */
+    protected $summary;
 
-    private $type;
+    /**
+     * @var \Rested\Definition\Parameter[]
+     */
+    protected $tokens = [];
 
-    private $filters = [];
+    /**
+     * @var null|\Rested\Transforms\TransformInterface
+     */
+    protected $transform;
 
-    private $inputs = [];
+    /**
+     * @var null|\Rested\Transforms\TransformMappingInterface
+     */
+    protected $transformMapping;
 
-    private $tokens = [];
+    /**
+     * @var string
+     */
+    protected $type;
 
-    public function __construct(ResourceDefinition $definition, $type, $name)
+    /**
+     * Constructs a new ActionDefinition.
+     *
+     * @param \Rested\Definition\ResourceDefinitionInterface $resourceDefinition The resource definition that owns the action.
+     * @param \Rested\Transforms\TransformInterface $defaultTransform Default transform to use when converting a mapping.
+     * @param \Rested\Transforms\TransformMappingInterface $defaultTransformMapping Default transform mapping to use in the absence of an override.
+     * @param string $type Type of action to add on this resource.
+     * @param string $id Name of the action. This is used to construct role names, Url's, etc.
+     */
+    public function __construct(
+        ResourceDefinitionInterface $resourceDefinition,
+        TransformInterface $defaultTransform,
+        TransformMappingInterface $defaultTransformMapping,
+        $type,
+        $id)
     {
         // convert hyphenated to camelcase
-        $this->callable = preg_replace_callback('!\-[a-zA-Z]!', function($matches) {
-            return strtoupper(str_replace('-', '', $matches[0]));
-        }, $name);
+        $this->controllerName = preg_replace_callback(
+            '!\-[a-zA-Z]!',
+            function ($matches) {
+                return strtoupper(str_replace('-', '', $matches[0]));
+            },
+            $id
+        );
 
-        $this->definition = $definition;
-        $this->name = $name;
+        $this->id = $id;
+        $this->defaultTransform = $defaultTransform;
+        $this->defaultTransformMapping = $defaultTransformMapping;
+        $this->resourceDefinition = $resourceDefinition;
         $this->type = $type;
-        $this->method = self::methodFromType($type);
+        $this->httpMethod = self::httpMethodFromType($type);
     }
 
-    public function addFilter($name, $type, $callable, $description)
-    {
-        $this->filters[] = new Filter($this, $name, $callable, $description, $type);
-
-        return $this;
-    }
-
-    public function addInput($name, $type, $defaultValue, $required, $description)
-    {
-        $this->inputs[] = new Parameter($name, $type, $defaultValue, $description, $required);
-
-        return $this;
-    }
-
+    /**
+     * {@inheritdoc}
+     */
     public function addToken($name, $type, $defaultValue = null, $description = null)
     {
+        // FIXME: should come from a factory
         $this->tokens[] = new Parameter($name, $type, $defaultValue, $description);
 
         return $this;
     }
 
-    public function appendUrl($part)
+    /**
+     * {@inheritdoc}
+     */
+    public function getAcceptedContentType()
     {
-        $this->appendUrl = $part;
+        return $this->acceptedContentType;
     }
 
-    public function checkAffordance($instance = null)
+    /**
+     * {@inheritdoc}
+     */
+    public function getAffordanceAvailabilityCallback()
     {
-        if ($this->affordanceChecker === null) {
-            return true;
-        }
-
-        return call_user_func_array($this->affordanceChecker, [$instance]);
+        return $this->affordanceAvailabilityCallback;
     }
 
-    public function findFilter($name)
+    /**
+     * {@inheritdoc}
+     */
+    public function getControllerName()
     {
-        foreach ($this->filters as $filter) {
-            if (strcasecmp($name, $filter->getName()) == 0) {
-                return $filter;
-            }
-        }
-
-        return null;
+        return $this->controllerName;
     }
 
-    public function getAppendUrl()
-    {
-        return $this->appendUrl;
-    }
-
-    public function getCallable()
-    {
-        return $this->callable;
-    }
-
-    public function getContentType()
-    {
-        return $this->contentType;
-    }
-
-    public function getDefinition()
-    {
-        return $this->definition;
-    }
-
+    /**
+     * {@inheritdoc}
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
-    public function getFilters()
+    /**
+     * {@inheritdoc}
+     */
+    public function getId()
     {
-        return $this->filters;
-    }
-
-    public function getInputs()
-    {
-        return $this->inputs;
-    }
-
-    public function getMethod()
-    {
-        return $this->method;
+        return $this->id;
     }
 
     /**
-     * @return \Rested\Definition\Model
+     * {@inheritdoc}
      */
-    public function getModel()
+    public function getHttpMethod()
     {
-        if ($this->modelOverride !== null) {
-            return $this->modelOverride;
-        }
-
-        return $this->getDefinition()->getModel();
+        return $this->httpMethod;
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
-    public function getName()
+    public function getResourceDefinition()
     {
-        return $this->name;
+        return $this->resourceDefinition;
     }
 
-    public function getRouteName()
-    {
-        if ($this->cacheRouteName !== null) {
-            return $this->cacheRouteName;
-        }
-
-        $endpoint = $this->getDefinition()->getEndpoint();
-        $type = $this->getName();
-
-        return ($this->cacheRouteName = Helper::makeRouteName($endpoint, $type));
-    }
-
+    /**
+     * {@inheritdoc}
+     */
     public function getSummary()
     {
         return $this->summary;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getTokens()
     {
         return $this->tokens;
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function getTransform()
+    {
+        return $this->transform ?: $this->defaultTransform;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getTransformMapping()
+    {
+        return $this->transformMapping ?: $this->defaultTransformMapping;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getType()
     {
         return $this->type;
     }
 
-    public function getUrl()
+    /**
+     * {@inheritdoc}
+     */
+    public function isAffordanceAvailable($instance = null)
     {
-        $tokens = $this->getTokens();
-        $parts = [];
-
-        foreach ($tokens as $token) {
-            $parts[] = sprintf('{%s}', $token->getName());
+        if ($this->affordanceAvailabilityCallback === null) {
+            return true;
         }
 
-        if (mb_strlen($this->appendUrl) > 0) {
-            $parts[] = $this->appendUrl;
-        }
-
-        return $this->getDefinition()->getUrl($parts);
+        return call_user_func_array($this->affordanceAvailabilityCallback, [$instance]);
     }
 
-    public function setAffordanceChecker($callback)
+    /**
+     * {@inheritdoc}
+     */
+    public function setAcceptedContentType($mimeType)
     {
-        $this->affordanceChecker = $callback;
+        $this->acceptedContentType = $mimeType;
 
         return $this;
     }
 
-    public function setCallable($method)
+    /**
+     * {@inheritdoc}
+     */
+    public function setAffordanceAvailabilityCallback($callback)
     {
-        $this->callable = $method;
+        $this->affordanceAvailabilityCallback = $callback;
 
         return $this;
     }
 
-    public function setContentType($type)
+    /**
+     * {@inheritdoc}
+     */
+    public function setControllerName($name)
     {
-        $this->contentType = $type;
+        $this->controllerName = $name;
 
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setDescription($value)
     {
         $this->description = $value;
@@ -238,24 +284,49 @@ class ActionDefinition
         return $this;
     }
 
-    public function setMethod($method)
+    /**
+     * {@inheritdoc}
+     */
+    public function setHttpMethod($method)
     {
-        $this->method = $method;
+        $this->httpMethod = $method;
 
         return $this;
     }
 
     /**
-     * @param \Rested\Definition\Model $model
-     * @return $this
+     * {@inheritdoc}
      */
-    public function setModelOverride(Model $model = null)
+    public function setShouldAppendId($value)
     {
-        $this->modelOverride = $model;
+        $this->shouldAppendId = $value;
 
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function setTransform(TransformInterface $transform)
+    {
+        $this->transform = $transform;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setTransformMapping(TransformMappingInterface $transformMapping)
+    {
+        $this->transformMapping = $transformMapping;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setSummary($value)
     {
         $this->summary = $value;
@@ -263,7 +334,15 @@ class ActionDefinition
         return $this;
     }
 
-    private static function methodFromType($type)
+    /**
+     * {@inheritdoc}
+     */
+    public function shouldAppendId()
+    {
+        return $this->shouldAppendId;
+    }
+
+    public static function httpMethodFromType($type)
     {
         switch ($type) {
             case ActionDefinition::TYPE_CREATE:

@@ -4,29 +4,49 @@ namespace Rested\Definition;
 class Embed
 {
 
-    private $name;
+    const SECURITY_ATTRIBUTE = 'rested_embed';
 
-    private $routeName;
+    /**
+     * @var string
+     */
+    protected $name;
 
-    private $userData;
+    /**
+     * @var string
+     */
+    protected $routeName;
 
-    public function __construct(Model $model, $name, $routeName, $userData)
+    /**
+     * @var array
+     */
+    protected $userData;
+
+    public function __construct($name, $routeName, $userData)
     {
         $this->name = $name;
         $this->routeName = $routeName;
         $this->userData = $userData;
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
     }
 
+    /**
+     * @return string
+     */
     public function getRouteName()
     {
         return $this->routeName;
     }
 
+    /**
+     * @return array
+     */
     public function getUserData()
     {
         return $this->userData;

@@ -1,7 +1,7 @@
 <?php
 namespace Rested;
 
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Request as Request;
 
 interface RestedServiceInterface
 {
@@ -11,15 +11,22 @@ interface RestedServiceInterface
     /**
      * @return \Nocarrier\Hal
      */
-    public function execute($url, $method = 'get', $data = [], &$statusCode = null);
+    public function execute($url, $method = Request::METHOD_GET, $data = [], &$statusCode = null);
 
     /**
-     * @return string
+     * @return null|\Rested\Definition\Compiled\CompiledActionDefinitionInterface
      */
-    public function getPrefix();
+    public function findActionByRouteName($routeName);
 
     /**
      * @return string[]
      */
     public function getResources();
+
+    /**
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param \Rested\ResourceInterface $resource
+     * @return \Rested\Http\Context
+     */
+    public function resolveContextFromRequest(Request $request, ResourceInterface $resource);
 }

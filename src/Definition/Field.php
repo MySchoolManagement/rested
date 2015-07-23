@@ -1,98 +1,82 @@
 <?php
 namespace Rested\Definition;
 
-use Rested\Definition\Parameter;
-use Rested\Helper;
+use Rested\Transforms\TransformMappingInterface;
 
-class Field
+abstract class Field
 {
 
-    private $description;
-    private $getter;
-    private $model;
-    private $name;
-    private $setter;
-    private $type;
-    private $validationParameters;
-    private $rel;
+    /**
+     * @var callable
+     */
+    protected $callback;
 
-    public function __construct(Model $model, $name, $getter, $setter, $description, $type, $validationParameters = null, $rel = null)
+    /**
+     * @var string
+     */
+    protected $dataType;
+
+    /**
+     * @var string
+     */
+    protected $description;
+
+    /**
+     * @var string
+     */
+    protected $name;
+
+    /**
+     * @var string
+     */
+    protected $rel;
+
+    public function __construct($name, $callback, $description, $dataType, $rel = null)
     {
-        $this->getter = $getter;
-        $this->setter = $setter;
+        $this->callback = $callback;
+        $this->dataType = $dataType;
         $this->description = $description;
-        $this->model = $model;
         $this->name = $name;
-        $this->type = $type;
-        $this->validationParameters = $validationParameters;
         $this->rel = $rel;
     }
 
     /**
-     * Gets the callback responsible for retrieving the value of this field.
-     *
      * @return callable
      */
-    public function getGetter()
+    public function getCallback()
     {
-        return $this->getter;
-    }
-
-    public function getRel()
-    {
-        return $this->rel;
+        return $this->callback;
     }
 
     /**
-     * Gets the callback responsible for setting the value of this field.
-     *
-     * @return callable
+     * @return string
      */
-    public function getSetter()
+    public function getDataType()
     {
-        return $this->setter;
+        return $this->dataType;
     }
 
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
     /**
-     * @return \Rested\Definition\Model
+     * @return string
      */
-    public function getModel()
-    {
-        return $this->model;
-    }
-
     public function getName()
     {
         return $this->name;
     }
 
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    public function getTypeValidatorName()
-    {
-        return Parameter::getValidator($this->getType());
-    }
-
-    public function getValidationParameters()
-    {
-        return $this->validationParameters;
-    }
-
     /**
-     * Is this field part of the underlying model?
-     *
-     * @return boolean
+     * @return null|string
      */
-    public function isModel()
+    public function getRel()
     {
-        return ($this->getSetter() !== null);
+        return $this->rel;
     }
 }

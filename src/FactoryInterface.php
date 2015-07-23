@@ -1,44 +1,50 @@
 <?php
 namespace Rested;
 
-use Rested\Definition\ResourceDefinition;
-use Symfony\Component\HttpFoundation\Request;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 
 interface FactoryInterface
 {
 
     /**
-     * @return \Rested\RestedResourceInterface
+     * @return \Rested\Http\CollectionResponse
      */
-    public function createBasicController($class);
+    public function createCollectionResponse(
+        CompiledResourceDefinitionInterface $resourceDefinition,
+        $href,
+        array $items = [],
+        $total = null);
 
     /**
-     * @return \Rested\RestedResourceInterface
+     * @return \Rested\Http\ContextInterface
      */
-    public function createBasicControllerFromRouteName($routeName);
+    public function createContext(
+        array $parameters,
+        $actionType,
+        $routeName,
+        CompiledResourceDefinitionInterface $resourceDefinition);
 
     /**
-     * @return \Rested\CollectionResponse
+     * @return \Rested\Definition\ResourceDefinitionInterface
      */
-    public function createCollectionResponse(RestedResourceInterface $resource, array $items = [], $total = 0);
+    public function createResourceDefinition($name, $modelClass);
 
     /**
-     * @return \Rested\Definition\ResourceDefinition
+     * @return \Rested\Transforms\TransformMappingInterface
      */
-    public function createDefinition($name, RestedResourceInterface $resource, $class);
+    public function createTransform();
 
     /**
-     * @return \Rested\InstanceResponse
+     * @return \Rested\Transforms\TransformMappingInterface
      */
-    public function createInstanceResponse(RestedResourceInterface $resource, $href, $item, $instance = null);
+    public function createTransformMapping($modelClass);
 
     /**
-     * return \Rested\Definition\Model
+     * @return \Rested\Http\InstanceResponse
      */
-    public function createModel(ResourceDefinition $resourceDefinition, $class);
-
-    /**
-     * @return \Symfony\Component\HttpFoundation\Request
-     */
-    public function resolveContextForRequest(Request $request, RestedResourceInterface $resource);
+    public function createInstanceResponse(
+        CompiledResourceDefinitionInterface $resourceDefinition,
+        $href,
+        array $data,
+        $instance = null);
 }
