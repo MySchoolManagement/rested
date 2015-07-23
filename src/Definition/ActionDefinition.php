@@ -1,12 +1,8 @@
 <?php
 namespace Rested\Definition;
 
-use Rested\Context;
-use Rested\Definition\Mapping;
 use Rested\Helper;
-use Rested\Security\AccessVoter;
-use Rested\Traits\ExportTrait;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Request as HttpRequest;
 
 class ActionDefinition
 {
@@ -15,64 +11,69 @@ class ActionDefinition
     const TYPE_CREATE = 'create';
     const TYPE_DELETE = 'delete';
     const TYPE_INSTANCE = 'instance';
-    const TYPE_INSTANCE_ACTION = 'instance_action';
+    const TYPE_INSTANCE_AFFORDANCE = 'instance_affordance';
     const TYPE_UPDATE = 'update';
 
     private $affordanceChecker;
 
-    private $appendUrl;
-
+    /**
+     * @var \Rested\Definition\ResourceDefinition
+     */
     private $definition;
 
-    private $cacheRouteName;
+    private $acceptedContentTypes = [
+        'application/json'
+    ];
 
-    private $callable;
-
-    private $contentType = 'application/json';
+    private $controllerName;
 
     private $description;
 
+    private $id;
+
     private $method;
 
-    private $modelOverride;
+    /**
+     * @var null|\Rested\Definition\TransformMapping
+     */
+    private $transformMapping;
 
-    private $name;
+    /**
+     * @var bool
+     */
+    private $shouldAppendId;
 
     private $summary;
 
     private $type;
 
-    private $filters = [];
-
-    private $inputs = [];
-
+    /**
+     * @var \Rested\Definition\Parameter[]
+     */
     private $tokens = [];
 
-    public function __construct(ResourceDefinition $definition, $type, $name)
+    /**
+     * Constructs a new ActionDefinition.
+     *
+     * @param \Rested\Definition\ResourceDefinition $definition Resource the action is available on.
+     * @param string $type Type of action to add on this resource.
+     * @param $id
+     */
+    public function __construct(ResourceDefinition $definition, $type, $id)
     {
         // convert hyphenated to camelcase
-        $this->callable = preg_replace_callback('!\-[a-zA-Z]!', function($matches) {
-            return strtoupper(str_replace('-', '', $matches[0]));
-        }, $name);
+        $this->controllerName = preg_replace_callback(
+            '!\-[a-zA-Z]!',
+            function ($matches) {
+                return strtoupper(str_replace('-', '', $matches[0]));
+            },
+            $id
+        );
 
         $this->definition = $definition;
-        $this->name = $name;
+        $this->id = $id;
         $this->type = $type;
         $this->method = self::methodFromType($type);
-    }
-
-    public function addFilter($name, $type, $callable, $description)
-    {
-        $this->filters[] = new Filter($this, $name, $callable, $description, $type);
-
-        return $this;
-    }
-
-    public function addInput($name, $type, $defaultValue, $required, $description)
-    {
-        $this->inputs[] = new Parameter($name, $type, $defaultValue, $description, $required);
-
-        return $this;
     }
 
     public function addToken($name, $type, $defaultValue = null, $description = null)
@@ -82,13 +83,9 @@ class ActionDefinition
         return $this;
     }
 
-    public function appendUrl($part)
-    {
-        $this->appendUrl = $part;
-    }
-
     public function checkAffordance($instance = null)
     {
+        // TODO: refactor
         if ($this->affordanceChecker === null) {
             return true;
         }
@@ -96,35 +93,14 @@ class ActionDefinition
         return call_user_func_array($this->affordanceChecker, [$instance]);
     }
 
-    public function findFilter($name)
+    public function getAcceptedContentTypes()
     {
-        foreach ($this->filters as $filter) {
-            if (strcasecmp($name, $filter->getName()) == 0) {
-                return $filter;
-            }
-        }
-
-        return null;
+        return $this->acceptedContentTypes;
     }
 
-    public function getAppendUrl()
+    public function getControllerName()
     {
-        return $this->appendUrl;
-    }
-
-    public function getCallable()
-    {
-        return $this->callable;
-    }
-
-    public function getContentType()
-    {
-        return $this->contentType;
-    }
-
-    public function getDefinition()
-    {
-        return $this->definition;
+        return $this->controllerName;
     }
 
     public function getDescription()
@@ -132,14 +108,20 @@ class ActionDefinition
         return $this->description;
     }
 
-    public function getFilters()
+    /**
+     * @return \Rested\Definition\ResourceDefinition
+     */
+    public function getDefinition()
     {
-        return $this->filters;
+        return $this->definition;
     }
 
-    public function getInputs()
+    /**
+     * @return string
+     */
+    public function getId()
     {
-        return $this->inputs;
+        return $this->id;
     }
 
     public function getMethod()
@@ -148,35 +130,15 @@ class ActionDefinition
     }
 
     /**
-     * @return \Rested\Definition\Model
+     * @return \Rested\Definition\TransformMapping
      */
-    public function getModel()
+    public function getTransformMapping()
     {
-        if ($this->modelOverride !== null) {
-            return $this->modelOverride;
+        if ($this->transformMapping !== null) {
+            return $this->transformMapping;
         }
 
-        return $this->getDefinition()->getModel();
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    public function getRouteName()
-    {
-        if ($this->cacheRouteName !== null) {
-            return $this->cacheRouteName;
-        }
-
-        $endpoint = $this->getDefinition()->getEndpoint();
-        $type = $this->getName();
-
-        return ($this->cacheRouteName = Helper::makeRouteName($endpoint, $type));
+        return $this->getDefinition()->getDefaultTransformMapping();
     }
 
     public function getSummary()
@@ -194,22 +156,6 @@ class ActionDefinition
         return $this->type;
     }
 
-    public function getUrl()
-    {
-        $tokens = $this->getTokens();
-        $parts = [];
-
-        foreach ($tokens as $token) {
-            $parts[] = sprintf('{%s}', $token->getName());
-        }
-
-        if (mb_strlen($this->appendUrl) > 0) {
-            $parts[] = $this->appendUrl;
-        }
-
-        return $this->getDefinition()->getUrl($parts);
-    }
-
     public function setAffordanceChecker($callback)
     {
         $this->affordanceChecker = $callback;
@@ -217,16 +163,16 @@ class ActionDefinition
         return $this;
     }
 
-    public function setCallable($method)
+    public function setControllerName($name)
     {
-        $this->callable = $method;
+        $this->controllerName = $name;
 
         return $this;
     }
 
-    public function setContentType($type)
+    public function setAcceptedContentTypes(array $types)
     {
-        $this->contentType = $type;
+        $this->acceptedContentTypes = $types;
 
         return $this;
     }
@@ -246,12 +192,25 @@ class ActionDefinition
     }
 
     /**
-     * @param \Rested\Definition\Model $model
+     * Should the Id be appended to the Uri?
+     *
+     * @param bool $value
      * @return $this
      */
-    public function setModelOverride(Model $model = null)
+    public function setShouldAppendId($value)
     {
-        $this->modelOverride = $model;
+        $this->shouldAppendId = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param \Rested\Definition\TransformMapping $transformMapping
+     * @return $this
+     */
+    public function setTransformMapping(TransformMapping $transformMapping = null)
+    {
+        $this->transformMapping = $transformMapping;
 
         return $this;
     }
@@ -263,19 +222,29 @@ class ActionDefinition
         return $this;
     }
 
-    private static function methodFromType($type)
+    /**
+     * Should the Id be appended to the Uri?
+     *
+     * @return bool
+     */
+    public function shouldAppendId()
+    {
+        return $this->shouldAppendId;
+    }
+
+    public static function methodFromType($type)
     {
         switch ($type) {
             case ActionDefinition::TYPE_CREATE:
-                return Request::METHOD_POST;
+                return HttpRequest::METHOD_POST;
 
             case ActionDefinition::TYPE_DELETE:
-                return Request::METHOD_DELETE;
+                return HttpRequest::METHOD_DELETE;
 
             case ActionDefinition::TYPE_UPDATE:
-                return Request::METHOD_PUT;
+                return HttpRequest::METHOD_PUT;
         }
 
-        return Request::METHOD_GET;
+        return HttpRequest::METHOD_GET;
     }
 }

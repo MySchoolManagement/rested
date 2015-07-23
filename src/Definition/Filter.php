@@ -6,23 +6,18 @@ class Filter
 
     private $callable;
 
-    private $description;
+    private $dataType;
 
-    private $model;
+    private $description;
 
     private $name;
 
-    private $required;
-
-    private $type;
-
-    public function __construct(Model $model, $name, $callable, $description, $type)
+    public function __construct($name, $callable, $description, $dataType)
     {
         $this->callable = $callable;
+        $this->dataType = $dataType;
         $this->description = $description;
-        $this->model = $model;
         $this->name = $name;
-        $this->type = $type;
     }
 
     public function getCallable()
@@ -30,14 +25,9 @@ class Filter
         return $this->callable;
     }
 
-    public function getModel()
+    public function getDataType()
     {
-        return $this->model;
-    }
-
-    public function getName()
-    {
-        return $this->name;
+        return $this->dataType;
     }
 
     public function getDescription()
@@ -45,8 +35,8 @@ class Filter
         return $this->description;
     }
 
-    public function getType()
+    public function getName()
     {
-        return $this->type;
+        return $this->name;
     }
 }
