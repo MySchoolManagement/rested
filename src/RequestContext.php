@@ -194,7 +194,7 @@ class RequestContext
                 }
 
                 if (($r === 0) || ($r === false)) {
-                    $app->abort(400, sprintf('Bad value for \'%s\', expected \'%s\'.', $parameter->getName(), $parameter->getType()));
+                    //$app->abort(400, sprintf('Bad value for \'%s\', expected \'%s\'.', $parameter->getName(), $parameter->getType()));
                 }
 
                 if ($parameter->getName() === 'fields') {
