@@ -1,10 +1,12 @@
 <?php
 namespace Rested\Definition;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Facades\Validator;
 use Nocarrier\Hal;
 use Rested\Helper;
+use Rested\Http\InstanceResponse;
 use Rested\Security\AccessVoter;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -32,11 +34,15 @@ class Model
 
     private $class;
 
+    private $embeds = [];
+
     private $fields = [];
 
     private $filters = [];
 
     private $links = [];
+
+    private $modelCache = [];
 
     private $primaryKeyField = 'uuid';
 
@@ -101,6 +107,13 @@ class Model
         return $this;
     }
 
+    public function addEmbed($name, $routeName, array $userData = [])
+    {
+        $this->embeds[] = new Embed($this, $name, $routeName, $userData);
+
+        return $this;
+    }
+
     /**
      * Using the mapping information, applies the field data in $data
      * to $obj.
@@ -153,6 +166,11 @@ class Model
         } else {
             $instance->{$setter}($value);
         }
+    }
+
+    public function filterEmbedsForAccess()
+    {
+        return $this->embeds;
     }
 
     public function filterFieldsForAccess($operation)
@@ -287,46 +305,89 @@ class Model
         return $this;
     }
 
-    public function export($instance, $expand = true, $forceAllFields = false)
+    public function export($instance, $forceAllFields = false)
     {
         $e = [];
         $resource = $this->resourceDefinition->getResource();
         $context = $forceAllFields ? null : $resource->getCurrentContext();
         $href = $resource->createInstanceHref($instance);
 
-        if ($expand === true) {
-            $fields = $this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_GET);
-            $isEloquent = $instance instanceof EloquentModel;
+        $fields = $this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_GET);
+        $isEloquent = $instance instanceof EloquentModel;
 
-            foreach ($fields as $def) {
-                // a null context means all fields except expansions
-                if (($context === null) || ($forceAllFields === true) || ($context->wantsField($def->getName()) === true)) {
-                    $callable = $def->getGetter();
+        foreach ($fields as $def) {
+            // a null context means all fields except expansions
+            if (($context === null) || ($forceAllFields === true) || ($context->wantsField($def->getName()) === true)) {
+                $callable = $def->getGetter();
 
-                    if ($callable !== null) {
-                        if (is_array($callable) === true) {
-                            $val = call_user_func($callable, $instance);
+                if ($callable !== null) {
+                    if (is_array($callable) === true) {
+                        $val = call_user_func($callable, $instance);
+                    } else {
+                        if ($isEloquent === true) {
+                            $val = $instance->getAttribute($callable);
                         } else {
-                            if ($isEloquent === true) {
-                                $val = $instance->getAttribute($callable);
-                            } else {
-                                $val = $instance->$callable();
-                            }
+                            $val = $instance->$callable();
                         }
-
-                        $e[$def->getName()] = $this->exportValue($def, $val);
                     }
+
+                    $e[$def->getName()] = $this->exportValue($def, $val);
                 }
             }
         }
 
-        // FIXME
-        return $resource->getFactory()->createInstanceResponse($resource, $href, $e, $instance);
+        $response = $resource->getFactory()->createInstanceResponse($resource, $href, $e, $instance);
+        $this->exportEmbeds($response, $instance);
+
+        return $response;
     }
 
-    public function exportAll($instance, $expand = true)
+    public function exportEmbeds(InstanceResponse $response, $instance)
     {
-        return $this->export($instance, $expand, true);
+        $models = [
+
+        ];
+
+        $embeds = $this->filterEmbedsForAccess();
+        $resource = $this->resourceDefinition->getResource();
+        $context = $resource->getCurrentContext();
+
+        foreach ($embeds as $embed) {
+            $name = $embed->getName();
+
+            if ($context->wantsEmbeddable($name) === false) {
+                continue;
+            }
+
+            if (array_key_exists($name, $models) === false) {
+                // FIXME: provide a nicer way to do this
+                $this->modelCache[$name] = app('rested_students_instance')
+                    ->getDefinition()
+                    ->findAction(ActionDefinition::TYPE_INSTANCE)
+                    ->getModel()
+                ;
+            }
+
+            $model = $this->modelCache[$name];
+            $values = $instance->{$embed->getUserData()['rel']};
+
+            if ($values instanceof Collection) {
+                $items = [];
+
+                foreach ($values as $value) {
+                    $items[] = $model->exportAll($value);
+                }
+
+                $response->addResource($name, $resource->getFactory()->createCollectionResponse($resource, $items));
+            } else {
+                $response->addResource($name, $model->exportAll($values));
+            }
+        }
+    }
+
+    public function exportAll($instance)
+    {
+        return $this->export($instance, true);
     }
 
     private function exportValue(Field $field, $value)

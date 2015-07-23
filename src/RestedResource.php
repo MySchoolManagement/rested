@@ -1,6 +1,7 @@
 <?php
 namespace Rested;
 
+use App\Rested\Resources\StudentsResource;
 use Illuminate\Support\Facades\Auth;
 use Rested\Security\AccessVoter;
 use Rested\UrlGeneratorInterface;
@@ -47,6 +48,8 @@ trait RestedResource
      * @return \Rested\Definition\ResourceDefinition
      */
     public abstract function createDefinition();
+
+    //protected abstract function extractDataFromRequest(HttpRequest $request);
 
     public function getAuthorizationChecker()
     {

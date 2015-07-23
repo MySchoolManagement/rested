@@ -15,7 +15,7 @@ class RequestContext
     private $routeName;
 
     private $parameters = [
-        'embeddables' => [],
+        'embed' => [],
         'fields' => [],
         'filters' => []
     ];
@@ -38,21 +38,8 @@ class RequestContext
         return $this->actionType;
     }
 
-    public function getFields()
+    public function getFilterValue($name)
     {
-        if ($this->hasAccessToField($name) === false) {
-            return null;
-        }
-
-        return $this->parameters['fields'];
-    }
-
-    public function getFilter($name)
-    {
-        if ($this->hasAccessToFilter($name) === false) {
-            return null;
-        }
-
         if ((is_array($this->parameters['filters']) === true)
             && (array_key_exists($name, $this->parameters['filters']) === true)
             && ($this->parameters['filters'][$name] !== null)) {
@@ -67,27 +54,9 @@ class RequestContext
         return $this->routeName;
     }
 
-    public function setFields(array $fields)
-    {
-        $this->parameters['fields'] = $fields;
-    }
-
-    public function setFilter($name, $value)
-    {
-        if ($this->hasAccessToFilter($name) === false) {
-            return null;
-        }
-
-        if ((is_array($this->parameters['filters']) === true)
-            && (array_key_exists($name, $this->parameters['filters']) === true)
-            && ($this->parameters['filters'][$name] !== null)) {
-            $this->parameters['filters'][$name] = $value;
-        }
-    }
-
     public function getLimit()
     {
-        return $this->getParameter('limit');
+        return $this->getParameterValue('limit');
     }
 
     public function getName()
@@ -97,10 +66,10 @@ class RequestContext
 
     public function getOffset()
     {
-        return $this->getParameter('offset');
+        return $this->getParameterValue('offset');
     }
 
-    public function getParameter($key)
+    public function getParameterValue($key)
     {
         if (array_key_exists($key, $this->parameters) === true) {
             return $this->parameters[$key];
@@ -109,10 +78,13 @@ class RequestContext
         return null;
     }
 
+    /**
+     * @return Parameter[]
+     */
     public function getReadParameters()
     {
         $p = [
-            new Parameter('embed',   Parameter::TYPE_ARRAY,  [], 'List of sub-records to embed.'),
+            new Parameter('embed',   Parameter::TYPE_STRING, '', 'List of sub-records to embed.'),
             new Parameter('fields',  Parameter::TYPE_STRING, '', 'List of fields to provide for each item.'),
             new Parameter('filters', Parameter::TYPE_ARRAY,  [], 'List of filters to apply.'),
             new Parameter('limit',   Parameter::TYPE_INT,    50, 'How many items are to be fetched?'),
@@ -123,7 +95,7 @@ class RequestContext
     }
 
     /**
-     * @return Illuminate\Http\Request
+     * @return \Illuminate\Http\Request
      */
     public function getRequest()
     {
@@ -135,91 +107,89 @@ class RequestContext
         return $this->resource;
     }
 
-    public function hasAccessToEmbeddable($name)
-    {
-        // @todo: security
-        /*if (($expansion = $this->getExportMapping()->findExpansion($name)) !== null) {
-            return $app['security']->isGranted($expansion->getRequiredPermission());
-        }*/
-        return true;
-
-        return false;
-    }
-
-    public function hasAccessToField($name)
-    {
-        // @todo: security
-        /*if (($field = $this->getExportMapping()->findField($name)) !== null) {
-            return $app['security']->isGranted($field->getRequiredPermission());
-        }*/
-        return true;
-
-        return false;
-    }
-
-    public function hasAccessToFilter($name)
-    {
-        // @todo: security
-        /*if (($filter = $this->getExportMapping()->findFilter($name)) !== null) {
-            return $app['security']->isGranted($filter->getRequiredPermission());
-        }*/
-
-        return true;
-
-        return false;
-    }
-
     private function init()
     {
         $data = $this->request->query->all();
-        $hasFields = false;
 
         foreach ($this->getReadParameters() as $parameter) {
             $r = false;
+            $name = $parameter->getName();
+            $type = $parameter->getType();
 
-            if (array_key_exists($parameter->getName(), $data) === false) {
-                $this->parameters[$parameter->getName()] = $parameter->getDefaultValue();
+            if (array_key_exists($name, $data) === false) {
+                $this->parameters[$name] = $parameter->getDefaultValue();
             } else {
-                if (($parameter->getDefaultValue() == null) && (array_key_exists($parameter->getName(), $data) == false)) {
+                if (($parameter->getDefaultValue() == null) && (array_key_exists($name, $data) == false)) {
                     $r = false;
                 } else {
                     // validate arrays here as builtin validation relies on strings
                     if ($parameter->expects('array') == true) {
-                        if (is_array($data[$parameter->getName()]) === true) {
+                        if (is_array($data[$name]) === true) {
                             $r = true;
                         }
                     } else {
-                        $r = preg_match('/'.Parameter::getValidatorPattern($parameter->getType()).'/i', $data[$parameter->getName()]);
+                        $r = preg_match(sprintf('/%s/i', Parameter::getValidatorPattern($type)), $data[$name]);
                     }
                 }
 
                 if (($r === 0) || ($r === false)) {
-                    //$app->abort(400, sprintf('Bad value for \'%s\', expected \'%s\'.', $parameter->getName(), $parameter->getType()));
+                    $app->abort(400, sprintf('Bad value for \'%s\', expected \'%s\'.', $name, $type));
                 }
 
-                if ($parameter->getName() === 'fields') {
-                    $hasFields = true;
-                }
-
-                // we do some cheeky processing here to turn true/false in to booleans)
-                $this->parameters[$parameter->getName()] = $this->processValue($data[$parameter->getName()]);
+                $this->parameters[$name] = $this->processValue($data[$name]);
             }
         }
 
-        // fields comes as a comma separated list but we want it as an array
+        // comma separated lists but we want arrays
+        $this->parameters['embed'] = strlen($this->parameters['embed']) ? explode(',', $this->parameters['embed']) : [];
         $this->parameters['fields'] = strlen($this->parameters['fields']) ? explode(',', $this->parameters['fields']) : [];
+
+        $this->convertDottedNotation($this->parameters['fields']);
+        $this->convertDottedNotation($this->parameters['filters']);
+    }
+
+    private function convertDottedNotation(array &$source)
+    {
+        foreach ($source as $k => $v) {
+            $left = null;
+            $index = null;
+            $value = null;
+
+            if (mb_strpos($v, '.') !== false) {
+                $parts = explode('.', $v);
+                $left = $parts[0];
+                $index = null;
+                $value = $parts[1];
+            } else if (mb_strpos($k, '.') !== false) {
+                $parts = explode('.', $k);
+                $left = $parts[0];
+                $index = $parts[1];
+                $value = $v;
+            } else {
+                continue;
+            }
+
+            $parts = explode('.', $v);
+
+            if (array_key_exists($left, $source) === false) {
+                $source[$left] = [];
+            }
+
+            if ($index !== null) {
+                $source[$left][$index] = $value;
+            } else {
+                $source[$left][] = $value;
+            }
+
+            unset($source[$k]);
+        }
     }
 
     public function wantsEmbeddable($name)
     {
-        if ($this->hasAccessToEmbeddable($name) === false) {
-            return false;
-        }
-
-        if (is_array($this->parameters['embeddables']) === true) {
-            if ((array_key_exists('all', $this->parameters['embeddables']) === true) || (array_key_exists($name, $this->parameters['embeddables']) === true)) {
-                return true;
-            }
+        if ((in_array('all', $this->parameters['embed']) === true)
+            || (in_array($name, $this->parameters['embed']) === true)) {
+            return true;
         }
 
         return false;
@@ -227,10 +197,6 @@ class RequestContext
 
     public function wantsField($name)
     {
-        if ($this->hasAccessToField($name) === false) {
-            return false;
-        }
-
         if (in_array('all', $this->parameters['fields']) === true) {
             return true;
         }
