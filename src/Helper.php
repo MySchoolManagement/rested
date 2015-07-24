@@ -55,7 +55,7 @@ class Helper
     public static function makeValidationMessages($validator)
     {
         $failed = $validator->failed();
-        $validationMessages = $validator->messages();;
+        $validationMessages = $validator->messages();
         $messages = [];
 
         foreach ($failed as $field => $rules) {
