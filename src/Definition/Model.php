@@ -4,6 +4,7 @@ namespace Rested\Definition;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Support\Facades\Validator;
 use Nocarrier\Hal;
+use Rested\Helper;
 use Rested\Security\AccessVoter;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -397,17 +398,7 @@ class Model
         $validator = Validator::make($data, $rules);
 
         if ($validator->fails() === true) {
-            $failed = $validator->failed();
-            $validationMessages = $validator->messages();;
-            $messages = [];
-
-            foreach ($failed as $field => $rules) {
-                $messages[$field] = [];
-
-                foreach ($rules as $rule => $parameters) {
-                    $messages[$field][$rule] = $validationMessages->first($field);
-                }
-            }
+            $messages = Helper::makeValidationMessages($validator);
         }
 
         return $messages;
