@@ -9,15 +9,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
-trait RestedResource
+trait Resource
 {
 
     /**
-     * Aborts the request and sends the given message and HTTP status code
-     * to the client.
-     *
-     * @param int $statusCode HTTP status code.
-     * @param array Array of attributes to return in the response.
+     * {@inheritdoc}
      */
     public function abort($statusCode, array $attributes = [])
     {
@@ -40,12 +36,6 @@ trait RestedResource
     /**
      * {@inheritdoc}
      */
-    public static function createDefinition(FactoryInterface $factory)
-    {
-        // TODO: implement NotImplementException, irony!
-        throw new \Exception();
-    }
-
     public function done(Hal $response = null, $statusCode = HttpResponse::HTTP_OK, $headers = [])
     {
         $headers = array_merge(['content-type' => 'application/json'], $headers);
@@ -55,36 +45,24 @@ trait RestedResource
     }
 
     /**
-     * {@inhertidoc}
+     * @return \Rested\Definition\ActionDefinition
+     */
+    public function getCurrentAction()
+    {
+        return $this->getCurrentContext()->getAction();
+    }
+
+    /**
+     * @return \Rested\Http\Context
      */
     public function getCurrentContext()
     {
+        $request = $this->getCurrentRequest();
+
         return $this
             ->getRestedService()
-            ->resolveContextFromRequest($this->getCurrentRequest(), $this->getDefinition())
+            ->resolveContextFromRequest($request, $this)
         ;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getCurrentTransformMapping()
-    {
-        return $this->getCurrentContext()->getTransformMapping();
-    }
-
-    /**
-     * @return \Rested\Definition\ResourceDefinition
-     */
-    public final function getDefinition()
-    {
-        static $definition = null;
-
-        if ($definition !== null) {
-            return $definition;
-        }
-
-        return ($definition = static::createDefinition($this->getFactory()));
     }
 
     public function handle()

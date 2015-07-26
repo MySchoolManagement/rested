@@ -1,32 +1,30 @@
 <?php
 namespace Rested\Http;
 
-use Rested\Definition\ImmutableResourceDefinition;
-use Rested\Definition\ResourceDefinition;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 
-class ImmutableContext
+class Context implements ContextInterface
 {
 
     /**
      * @var string
      */
-    private $actionType;
+    protected $actionType;
 
     /**
-     * @var \Rested\Definition\ImmutableResourceDefinition
+     * @var \Rested\Definition\Compiled\CompiledResourceDefinitionInterface
      */
-    private $definition;
+    protected $resourceDefinition;
 
     /**
      * @var string
      */
-    private $routeName;
+    protected $routeName;
 
     /**
      * @var array
      */
-    private $parameters = [
+    protected $parameters = [
         'embed' => [],
         'fields' => [],
         'filters' => [],
@@ -38,17 +36,16 @@ class ImmutableContext
         array $parameters,
         $actionType,
         $routeName,
-        ResourceDefinition $resourceDefinition,
-        AuthorizationCheckerInterface $authorizationChecker)
+        CompiledResourceDefinitionInterface $resourceDefinition)
     {
         $this->actionType = $actionType;
-        $this->definition = new ImmutableResourceDefinition($authorizationChecker, $resourceDefinition);
         $this->parameters = $parameters;
+        $this->resourceDefinition = $resourceDefinition;
         $this->routeName = $routeName;
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getActionType()
     {
@@ -56,15 +53,23 @@ class ImmutableContext
     }
 
     /**
-     * @return \Rested\Definition\ImmutableResourceDefinition
+     * {@inheritdoc}
      */
-    public function getDefinition()
+    public function getAction()
     {
-        return $this->definition;
+        return $this->getResourceDefinition()->findActionByRouteName($this->routeName);
     }
 
     /**
-     * @return string[]
+     * {@inheritdoc}
+     */
+    public function getResourceDefinition()
+    {
+        return $this->resourceDefinition;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getFields()
     {
@@ -72,8 +77,7 @@ class ImmutableContext
     }
 
     /**
-     * @param string $name
-     * @return null|string
+     * {@inheritdoc}
      */
     public function getFilterValue($name)
     {
@@ -86,23 +90,32 @@ class ImmutableContext
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
      */
     public function getRouteName()
     {
         return $this->routeName;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getLimit()
     {
         return $this->parameters['limit'];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getOffset()
     {
         return $this->parameters['offset'];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function wantsEmbeddable($name)
     {
         if ((array_key_exists('all', $this->parameters['embed']) === true)
@@ -113,6 +126,9 @@ class ImmutableContext
         return false;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function wantsField($name)
     {
         if ((in_array('all', $this->parameters['fields']) === true)

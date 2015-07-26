@@ -6,9 +6,12 @@ use Rested\Definition\Parameter;
 class RequestParser
 {
 
+    /**
+     * @var array
+     */
     private $parameters = [
-        'embed' => [],
-        'fields' => [],
+        'embed' => '',
+        'fields' => '',
         'filters' => [],
         'limit' => 0,
         'offset' => 0,
@@ -59,11 +62,11 @@ class RequestParser
     public function getAcceptedParameters()
     {
         return [
-            new Parameter('embed',   Parameter::TYPE_ARRAY,  [], 'List of sub-records to embed.'),
-            new Parameter('fields',  Parameter::TYPE_STRING, '', 'List of fields to provide for each item.'),
-            new Parameter('filters', Parameter::TYPE_ARRAY,  [], 'List of filters to apply.'),
-            new Parameter('limit',   Parameter::TYPE_INT,    50, 'How many items are to be fetched?'),
-            new Parameter('offset',  Parameter::TYPE_INT,    0,  'At what offset should we start fetching items?')
+            new Parameter('embed', Parameter::TYPE_STRING, '', 'List of sub-records to embed.'),
+            new Parameter('fields', Parameter::TYPE_STRING, '', 'List of fields to provide for each item.'),
+            new Parameter('filters', Parameter::TYPE_ARRAY, [], 'List of filters to apply.'),
+            new Parameter('limit', Parameter::TYPE_INT, 50, 'How many items are to be fetched?'),
+            new Parameter('offset', Parameter::TYPE_INT, 0, 'At what offset should we start fetching items?')
         ];
     }
 
@@ -113,8 +116,8 @@ class RequestParser
         $this->parameters['embed'] = strlen($this->parameters['embed']) ? explode(',', $this->parameters['embed']) : [];
         $this->parameters['fields'] = strlen($this->parameters['fields']) ? explode(',', $this->parameters['fields']) : [];
 
+        $this->convertDottedNotation($this->parameters['embed']);
         $this->convertDottedNotation($this->parameters['fields']);
-        $this->convertDottedNotation($this->parameters['filters']);
     }
 
     /**

@@ -2,23 +2,30 @@
 namespace Rested\Http;
 
 use Rested\Definition\ActionDefinition;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\FactoryInterface;
 use Rested\RestedResourceInterface;
+use Rested\RestedServiceInterface;
 use Rested\UrlGeneratorInterface;
 
 class CollectionResponse extends Response
 {
 
-    public function __construct(FactoryInterface $factory, UrlGeneratorInterface $urlGenerator,
-        RestedResourceInterface $resource, array $items, $total)
+    public function __construct(
+        RestedServiceInterface $restedService,
+        UrlGeneratorInterface $urlGenerator,
+        CompiledResourceDefinitionInterface $resourceDefinition,
+        $href,
+        array $items,
+        $total)
     {
-        parent::__construct($factory, $urlGenerator, $resource->getCurrentActionUri(), [
+        parent::__construct($restedService, $urlGenerator, $href, [
             'count' => sizeof($items),
             'total' => $total,
         ]);
 
         $this->setResource('items', $items);
-        $this->addActions($resource, [ActionDefinition::TYPE_CREATE]);
+        $this->addActions($resourceDefinition, [ActionDefinition::TYPE_CREATE]);
     }
 
     /**

@@ -1,83 +1,80 @@
 <?php
 namespace Rested\Definition;
 
-class Field
+abstract class Field
 {
 
-    private $dataType;
-    private $description;
-    private $getter;
-    private $name;
-    private $setter;
-    private $validationParameters;
-    private $rel;
+    /**
+     * @var callable
+     */
+    protected $callback;
 
-    public function __construct($name, $getter, $setter, $description, $dataType, $validationParameters = null, $rel = null)
+    /**
+     * @var string
+     */
+    protected $dataType;
+
+    /**
+     * @var string
+     */
+    protected $description;
+
+    /**
+     * @var string
+     */
+    protected $name;
+
+    /**
+     * @var string
+     */
+    protected $rel;
+
+    public function __construct($name, $callback, $description, $dataType, $rel = null)
     {
-        $this->getter = $getter;
-        $this->setter = $setter;
+        $this->callback = $callback;
         $this->dataType = $dataType;
         $this->description = $description;
         $this->name = $name;
-        $this->validationParameters = $validationParameters;
         $this->rel = $rel;
     }
 
+    /**
+     * @return callable
+     */
+    public function getCallback()
+    {
+        return $this->callback;
+    }
+
+    /**
+     * @return string
+     */
     public function getDataType()
     {
         return $this->dataType;
     }
 
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
     /**
-     * Gets the callback responsible for retrieving the value of this field.
-     *
-     * @return callable
+     * @return string
      */
-    public function getGetter()
-    {
-        return $this->getter;
-    }
-
     public function getName()
     {
         return $this->name;
     }
 
+    /**
+     * @return null|string
+     */
     public function getRel()
     {
         return $this->rel;
-    }
-
-    /**
-     * Gets the callback responsible for setting the value of this field.
-     *
-     * @return callable
-     */
-    public function getSetter()
-    {
-        return $this->setter;
-    }
-
-    public function getTypeValidatorName()
-    {
-        return Parameter::getValidator($this->getDataType());
-    }
-
-    public function getValidationParameters()
-    {
-        return $this->validationParameters;
-    }
-
-    /**
-     * @return boolean
-     */
-    public function hasSetter()
-    {
-        return ($this->getSetter() !== null);
     }
 }

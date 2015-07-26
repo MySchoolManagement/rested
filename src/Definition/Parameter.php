@@ -15,60 +15,99 @@ class Parameter
     const TYPE_STRING = 'string';
     const TYPE_UUID = 'uuid';
 
+    /**
+     * @var string
+     */
     private $type;
 
+    /**
+     * @var string
+     */
     private $description;
 
+    /**
+     * @var mixed
+     */
     private $defaultValue;
 
+    /**
+     * @var string
+     */
     private $name;
 
+    /**
+     * @var bool
+     */
     private $required;
 
-    public function __construct($name, $type, $defaultValue, $description, $required = false)
+    public function __construct($name, $dataType, $defaultValue, $description, $isRequired = false)
     {
         $this->name = $name;
-        $this->type = $type;
+        $this->dataType = $dataType;
         $this->defaultValue = $defaultValue;
         $this->description = $description;
-        $this->required = $required;
+        $this->isRequired = $isRequired;
     }
 
+    /**
+     * @return bool
+     */
     public function acceptAnyValue()
     {
         return $this->expects('mixed');
     }
 
+    /**
+     * @return bool
+     */
     public function expects($type)
     {
         return ($this->type === $type);
     }
 
+    /**
+     * @return mixed
+     */
     public function getDefaultValue()
     {
         return $this->defaultValue;
     }
 
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
     }
 
-    public function getType()
+    /**
+     * @return mixed
+     */
+    public function getDataType()
     {
-        return $this->type;
+        return $this->dataType;
     }
 
+    /**
+     * @return bool
+     */
     public function isRequired()
     {
         return $this->required;
     }
 
+    /**
+     * @return null|string
+     */
     public static function getValidator($type)
     {
         switch ($type) {
@@ -97,6 +136,9 @@ class Parameter
         return null;
     }
 
+    /**
+     * @return null|string
+     */
     public static function getValidatorPattern($type)
     {
         switch ($type) {

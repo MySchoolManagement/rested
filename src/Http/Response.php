@@ -4,10 +4,16 @@ namespace Rested\Http;
 use Mockery\Generator\Parameter;
 use Nocarrier\Hal;
 use Rested\Definition\ActionDefinition;
+use Rested\Definition\ActionDefinitionInterface;
+use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\Definition\Field;
+use Rested\Definition\GetterField;
+use Rested\Definition\SetterField;
 use Rested\FactoryInterface;
 use Rested\Helper;
 use Rested\RestedResourceInterface;
+use Rested\RestedServiceInterface;
 use Rested\Security\AccessVoter;
 use Rested\UrlGeneratorInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,24 +21,33 @@ use Symfony\Component\HttpFoundation\Request;
 abstract class Response extends Hal
 {
 
-    private $factory;
+    /**
+     * @var \Rested\RestedServiceInterface
+     */
+    protected $restedService;
 
-    private $urlGenerator;
+    /**
+     * @var \Rested\UrlGeneratorInterface
+     */
+    protected $urlGenerator;
 
-    public function __construct(FactoryInterface $factory, UrlGeneratorInterface $urlGenerator, $uri = null, $data = [])
+    public function __construct(
+        RestedServiceInterface $restedService,
+        UrlGeneratorInterface $urlGenerator,
+        $uri = null,
+        array $data = [])
     {
         parent::__construct($uri, $data);
 
-        $this->factory = $factory;
+        $this->restedService = $restedService;
         $this->urlGenerator = $urlGenerator;
 
         $this->addLink('self', $uri);
     }
 
-    protected function addActions(RestedResourceInterface $resource, array $which, $instance = null)
+    protected function addActions(CompiledResourceDefinitionInterface $resourceDefinition, array $which, $instance = null)
     {
-        $def = $resource->getDefinition();
-        $actions = $def->filterActionsForAccess($instance);
+        $actions = $resourceDefinition->getActions();
         $links = [];
 
         $this->data['_actions'] = [];
@@ -46,41 +61,34 @@ abstract class Response extends Hal
                 continue;
             }
 
-            $links = array_merge($links, $this->addAction($action, $instance));
+            $links = array_merge($links, $this->addAction($resourceDefinition, $action, $instance));
         }
 
-        foreach ($links as $rel => $route) {
-            $this->addRestedLink($rel, $route);
+        foreach ($links as $rel => $routeName) {
+            $this->addRestedLink($rel, $routeName);
         }
     }
 
-    private function addRestedLink($rel, $route)
+    protected function addRestedLink($rel, $routeName)
     {
-        $url = $this->urlGenerator->generate($route);
-        $controller = $this->factory->createBasicControllerFromRouteName($route);
-        $action = null;
-
-        if ($controller !== null) {
-            $action = $controller->getDefinition()->findActionByRouteName($route);
-        }
-
-        $this->addLink($rel, $url);
-        $this->addFiltersToLink($rel, $action);
-    }
-
-    private function addFiltersToLink($rel, ActionDefinition $action= null)
-    {
-        $filters = [];
+        $action = $this->restedService->findActionByRouteName($routeName);
 
         if ($action !== null) {
-            $model = $action->getModel();
+            $this->addLink($rel, $action->getEndpointUrl());
+            $this->addFiltersToLink($rel, $action);
+        }
+    }
 
-            foreach ($model->filterFiltersForAccess() as $filter) {
-                $filters[$filter->getName()] = [
-                    'token' => sprintf('filters[%s]', $filter->getName()),
-                    'type' => $filter->getType(),
-                ];
-            }
+    protected function addFiltersToLink($rel, CompiledActionDefinitionInterface $action)
+    {
+        $filters = [];
+        $transformMapping = $action->getTransformMapping();
+
+        foreach ($transformMapping->getFilters() as $filter) {
+            $filters[$filter->getName()] = [
+                'token' => sprintf('filters[%s]', $filter->getName()),
+                'type' => $filter->getDataType(),
+            ];
         }
 
         if (sizeof($filters) > 0) {
@@ -94,45 +102,47 @@ abstract class Response extends Hal
         }
     }
 
-    private function addAction(ActionDefinition $action, $instance = null)
-    {
-        $model = $action->getModel();
-        $uri = $this->getUri();
+    protected function addAction(
+        CompiledResourceDefinitionInterface $resourceDefinition,
+        CompiledActionDefinitionInterface $action,
+        $instance = null)
+    {;
+        $url = $action->getEndpointUrl();
         $fields = [];
         $links = [];
-        $operation = $action->getMethod() === Request::METHOD_GET ? AccessVoter::ATTRIB_FIELD_GET : AccessVoter::ATTRIB_FIELD_SET;
-        $modelFields = $model->runCustomFieldFilter($model->getFields(), $operation, $instance);
+        $operation = ($action->getHttpMethod() === Request::METHOD_GET) ? GetterField::OPERATION : SetterField::OPERATION;
+        $transform = $action->getTransform();
+        $transformMapping = $action->getTransformMapping();
+
+        // FIXME: refactor so that this runs when the action is compiled
+        $modelFields = $transformMapping->executeFieldFilterCallback($operation, $instance);
 
         foreach ($modelFields as $field) {
-            if ($field->isModel() === false) {
-                continue;
-            }
-
             $fields[] = $this->processField($field);
-            $links = array_merge($links, $model->getLinks());
+            $links = array_merge($links, $transformMapping->getLinks());
         }
 
-        // TODO: fix this
-        if ($action->getType() === ActionDefinition::TYPE_INSTANCE_ACTION) {
-            $uri = $uri . '/' . $action->getAppendUrl();//Helper::makeUrl($uri, $action->getAppendUrl());
+        // TODO: we probably should not be making urls
+        if ($action->getType() !== ActionDefinition::TYPE_CREATE) {
+            $url = $transform->makeUrlForInstance($resourceDefinition, $instance);
         }
 
         $this->data['_actions'][] = [
-            'name' => $action->getName(),
-            'href' => $uri,
-            'method' => $action->getMethod(),
-            'type' => $action->getContentType(),
-            'fields' => $fields
+            'fields' => $fields,
+            'href' => $url,
+            'id' => $action->getId(),
+            'method' => $action->getHttpMethod(),
+            'type' => $action->getAcceptedContentType(),
         ];
 
         return $links;
     }
 
-    private function processField(Field $field)
+    protected function processField(Field $field)
     {
         $f = [
             'name' => $field->getName(),
-            'type' => $field->getType(),
+            'type' => $field->getDataType(),
         ];
 
         $rel = $field->getRel();

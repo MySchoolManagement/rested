@@ -2,62 +2,64 @@
 namespace Rested\Definition;
 
 use Rested\Exceptions\ActionExistsException;
-use Rested\Security\AccessVoter;
+use Rested\Transforms\TransformInterface;
+use Rested\Transforms\TransformMappingInterface;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
 
-class ResourceDefinition
+class ResourceDefinition implements ResourceDefinitionInterface
 {
 
     /**
-     * @var \Rested\Definition\ActionDefinition[]
+     * @var \Rested\Definition\ActionDefinitionInterface[]
      */
-    private $actions = [];
+    protected $actions = [];
 
     /**
      * @var string
      */
-    private $description;
+    protected $description;
 
     /**
-     * @var \Rested\Definition\TransformMapping
+     * @var \Rested\Transforms\TransformInterface
      */
-    private $defaultTransformMapping;
+    protected $defaultTransform;
 
     /**
-     * @var string
+     * @var \Rested\Transforms\TransformMappingInterface
      */
-    private $name;
-
-    /**
-     * @var string
-     */
-    private $path;
+    protected $defaultTransformMapping;
 
     /**
      * @var string
      */
-    private $summary;
+    protected $name;
+
+    /**
+     * @var string
+     */
+    protected $path;
+
+    /**
+     * @var string
+     */
+    protected $summary;
 
     /**
      * Constructs a new ResourceDefinition.
      *
      * @param string $name Friendly name for the resource. In the absence of a path, this is converted and used.
-     * @param \Rested\Definition\TransformMapping $defaultTransformMapping The default model that is assigned to actions within the resource.
+     * @param \Rested\Transforms\Transforminterface $defaultTansform The default transform that is assigned ot actions.
+     * @param \Rested\Transforms\TransformMappingInterface $defaultTransformMapping The default model that is assigned to actions.
      */
-    public function __construct($name, TransformMapping $defaultTransformMapping)
+    public function __construct($name, TransformInterface $defaultTansform, TransformMappingInterface $defaultTransformMapping)
     {
+        $this->defaultTransform = $defaultTansform;
         $this->defaultTransformMapping = $defaultTransformMapping;
         $this->name = $name;
     }
 
     /**
-     * Adds an action to this resource.
-     *
-     * @param string $type Type of action to add on this resource.
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     *
-     * @return \Rested\Definition\ActionDefinition
-     * @throws \Rested\Exceptions\ActionExistsException
+     * {@inheritdoc}
      */
     protected function addAction($type, $id)
     {
@@ -67,33 +69,18 @@ class ResourceDefinition
             }
         }
 
-        return ($this->actions[] = new ActionDefinition($this, $type, $id));
+        // FIXME: should use a factory
+        return ($this->actions[] = new ActionDefinition($this->defaultTransform, $this->defaultTransformMapping, $type, $id));
     }
 
     /**
-     * Adds an affordance (ability) that can be applied to a resource.
-     *
-     * Affordances allow you to provide logical endpoints to transition the resource between various states.
-     *
-     * A popular example of an affordance is a bank account. Your account has a balance and the ability to perform
-     * actions on that balance (withdrawals, deposits, etc.).
-     *
-     * Through your API you may provide these affordances as endpoints below the base URL of the resource
-     * (e.g. http://api.x.com/account/1/withdraw). These actions can affect the state of the underlying account. If your
-     * account goes overdrawn then you can remove the ability to access the withdraw affordance as the account is not
-     * in a positive balance.
-     *
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     * @param string $method HTTP verb the client needs to use to access the affordance.
-     * @param string $type Type of instance ID to accept. An affordance needs an existing resource to operate on.
-     *
-     * @return \Rested\Definition\ActionDefinition
+     * {@inheritdoc}
      */
     public function addAffordance($id = 'instance', $method = HttpRequest::METHOD_POST, $type = Parameter::TYPE_UUID)
     {
         $action = $this->addAction(ActionDefinition::TYPE_INSTANCE_AFFORDANCE, $id);
         $action
-            ->setMethod($method)
+            ->setHttpMethod($method)
             ->setShouldAppendId(true)
         ;
         $action->addToken('id', $type);
@@ -102,11 +89,7 @@ class ResourceDefinition
     }
 
     /**
-     * Adds an action to request a collection of resources.
-     *
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     *
-     * @return \Rested\Definition\ActionDefinition
+     * {@inheritdoc}
      */
     public function addCollection($id = 'collection')
     {
@@ -114,28 +97,17 @@ class ResourceDefinition
     }
 
     /**
-     * Adds an action to create a new resource.
-     *
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     * @param TransformMapping $transformMapping Transform mapping to use to validate and transform client input.
-     *
-     * @return \Rested\Definition\ActionDefinition
+     * {@inheritdoc}
      */
-    public function addCreateAction($id = 'create', TransformMapping $transformMapping = null)
+    public function addCreateAction($id = 'create')
     {
         $action = $this->addAction(ActionDefinition::TYPE_CREATE, $id);
-        $action->setTransformMapping($transformMapping);
 
         return $action;
     }
 
     /**
-     * Adds an action to delete an existing resource.
-     *
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     * @param string $type Type of instance ID to accept. The action requires the ID of the resource to delete.
-     *
-     * @return \Rested\Definition\ActionDefinition
+     * {@inheritdoc}
      */
     public function addDeleteAction($id = 'delete', $type = Parameter::TYPE_UUID)
     {
@@ -146,12 +118,7 @@ class ResourceDefinition
     }
 
     /**
-     * Adds an action to retrieve an existing resource.
-     *
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     * @param string $type Type of instance ID to accept. The action requires the ID of the resource to retrieve.
-     *
-     * @return ActionDefinition
+     * {@inheritdoc}
      */
     public function addInstance($id = 'instance', $type = Parameter::TYPE_UUID)
     {
@@ -162,12 +129,7 @@ class ResourceDefinition
     }
 
     /**
-     * Adds an action to update an existing resource.
-     *
-     * @param string $id Identifier of the action. This is used to construct the route name, action endpoint, etc.
-     * @param string $type Type of instance ID to accept. The action requires the ID of the resource to retrieve.
-     *
-     * @return \Rested\Definition\ActionDefinition
+     * {@inheritdoc}
      */
     public function addUpdateAction($id = 'update', $type = Parameter::TYPE_UUID)
     {
@@ -178,17 +140,12 @@ class ResourceDefinition
     }
 
     /**
-     * Find all actions of the given type.
-     *
-     * Note: There can be more than one type of some actions, most notably TYPE_INSTANCE_AFFORDANCE.
-     *
-     * @param string $type Type of action to search for.
-     *
-     * @return \Rested\Definition\ActionDefinition[]
+     * {@inheritdoc}
      */
     public function findActions($type)
     {
-        return array_filter($this->actions,
+        return array_filter(
+            $this->actions,
             function (ActionDefinition $value) use ($type) {
                 return ($value->getType() === $type);
             }
@@ -196,51 +153,45 @@ class ResourceDefinition
     }
 
     /**
-     * @param string $routeName
-     * @return null|\Rested\Definition\ActionDefinition
-     */
-    public function findActionByRouteName($routeName)
-    {
-        return array_filter($this->actions,
-            function (ActionDefinition $value) use ($routeName) {
-                return ($value->getRouteName() === $routeName);
-            }
-        );
-    }
-
-    /**
-     * Finds the first action of the given type.
-     *
-     * Note: There can be more than one type of some actions, most notably TYPE_INSTANCE_AFFORDANCE.
-     *
-     * @param string $type Type of action to search for.
-     *
-     * @return null|\Rested\Definition\ActionDefinition
+     * {@inheritdoc}
      */
     public function findFirstAction($type)
     {
-        return (sizeof($actions = $this->findActions($type)) > 0) ? $actions[0] : null;
+        $actions = $this->findActions($type);
+
+        if (sizeof($actions) > 0) {
+            return array_shift($actions);
+        }
+
+        return null;
     }
 
     /**
-     * Gets all of the actions available on the resource.
-     *
-     * @return \Rested\Definition\ActionDefinition[]
+     * {@inheritdoc}
      */
     public function getActions()
     {
         return $this->actions;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getModelClass()
     {
         return $this->getDefaultTransformMapping()->getModelClass();
     }
 
     /**
-     * The default transform mapping that is assigned to actions within the resource.
-     *
-     * @return \Rested\Definition\TransformMapping
+     * {@inheritdoc}
+     */
+    public function getDefaultTransform()
+    {
+        return $this->defaultTransform;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getDefaultTransformMapping()
     {
@@ -248,9 +199,7 @@ class ResourceDefinition
     }
 
     /**
-     * Description of the resource.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getDescription()
     {
@@ -258,9 +207,7 @@ class ResourceDefinition
     }
 
     /**
-     * Friendly name for the resource. In the absence of a path, this is converted and used.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getName()
     {
@@ -268,9 +215,7 @@ class ResourceDefinition
     }
 
     /**
-     * Path that is used when creating the Uri's for the resource.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getPath()
     {
@@ -278,9 +223,7 @@ class ResourceDefinition
     }
 
     /**
-     * Gets the short summary of the resource.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getSummary()
     {
@@ -288,10 +231,7 @@ class ResourceDefinition
     }
 
     /**
-     * Sets the description of the resource.
-     *
-     * @param string $value Description of the resource.
-     * @return $this
+     * {@inheritdoc}
      */
     public function setDescription($value)
     {
@@ -301,10 +241,7 @@ class ResourceDefinition
     }
 
     /**
-     * Sets the path that will be used when creating the Uri's for the resource.
-     *
-     * @param string $value Path to the resource.
-     * @return $this
+     * {@inheritdoc}
      */
     public function setPath($value)
     {
@@ -314,10 +251,7 @@ class ResourceDefinition
     }
 
     /**
-     * Sets the short summary of the resource.
-     *
-     * @param string $value Summary of the resource.
-     * @return $this
+     * {@inheritdoc}
      */
     public function setSummary($value)
     {

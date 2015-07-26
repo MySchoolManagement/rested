@@ -1,7 +1,7 @@
 <?php
 namespace Rested;
 
-use Rested\Definition\ResourceDefinition;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 
 interface FactoryInterface
 {
@@ -9,25 +9,52 @@ interface FactoryInterface
     /**
      * @return \Rested\Http\CollectionResponse
      */
-    public function createCollectionResponse(RestedResourceInterface $resource, array $items = [], $total = 0);
+    public function createCollectionResponse(
+        CompiledResourceDefinitionInterface $resourceDefinition,
+        $href,
+        array $items = [],
+        $total = 0);
 
     /**
-     * @return \Rested\Definition\ResourceDefinition
+     * @return \Rested\Compiler\CompilerInterface
      */
-    public function createDefinition($name, $modelClass);
+    public function createCompiler($shouldApplyAccessControl = true);
 
     /**
-     * @return \Rested\Http\ImmutableContext
+     * @return \Rested\Compiler\CompilerCacheInterface
      */
-    public function createImmutableContext(array $parameters, $actionType, $routeName, ResourceDefinition $resourceDefinition);
+    public function createCompilerCache();
+
+    /**
+     * @return \Rested\Http\ContextInterface
+     */
+    public function createContext(
+        array $parameters,
+        $actionType,
+        $routeName,
+        CompiledResourceDefinitionInterface $resourceDefinition);
+
+    /**
+     * @return \Rested\Definition\ResourceDefinitionInterface
+     */
+    public function createResourceDefinition($name, $modelClass);
+
+    /**
+     * @return \Rested\Transforms\TransformMappingInterface
+     */
+    public function createTransform();
+
+    /**
+     * @return \Rested\Transforms\TransformMappingInterface
+     */
+    public function createTransformMapping($modelClass);
 
     /**
      * @return \Rested\Http\InstanceResponse
      */
-    public function createInstanceResponse(RestedResourceInterface $resource, $href, $item, $instance = null);
-
-    /**
-     * return \Rested\Definition\TransformMapping
-     */
-    public function createTransformMapping($class);
+    public function createInstanceResponse(
+        CompiledResourceDefinitionInterface $resourceDefinition,
+        $href,
+        array $data,
+        $instance = null);
 }

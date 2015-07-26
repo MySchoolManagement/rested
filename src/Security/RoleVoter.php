@@ -1,28 +1,40 @@
 <?php
 namespace Rested\Security;
 
-use Rested\Helper;
+use Rested\Definition\ActionDefinition;
+use Rested\Definition\Filter;
+use Rested\Definition\GetterField;
+use Rested\Definition\SetterField;
+use Rested\NameGenerator;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 use Symfony\Component\Security\Core\Role\Role;
 use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
-class AccessVoter implements VoterInterface
+class RoleVoter implements VoterInterface
 {
 
-    const ATTRIB_ACTION_ACCESS = 'ACTION_ACCESS';
-    const ATTRIB_FIELD_GET = 'GET';
-    const ATTRIB_FIELD_SET = 'SET';
-    const ATTRIB_FILTER = 'FILTER';
-
-    const CLASS_ACTION = 'Rested\Definition\ActionDefinition';
     const CLASS_FIELD = 'Rested\Definition\Field';
     const CLASS_FILTER = 'Rested\Definition\Filter';
 
+    const INTERFACE_ACTION = 'Rested\Definition\ActionDefinitionInterface';
+    const INTERFACE_COMPILED_ACTION = 'Rested\Definition\Compiled\CompiledActionDefinitionInterface';
+    const INTERFACE_COMPILED_FIELD = 'Rested\Definition\Compiled\CompiledFieldInterface';
+    const INTERFACE_COMPILED_FILTER = 'Rested\Definition\Compiled\CompiledFilterInterface';
+
+    /**
+     * @var \Rested\NameGenerator
+     */
+    protected $nameGenerator;
+
+    /**
+     * @var \Symfony\Component\Security\Core\Role\RoleHierarchyInterface
+     */
     protected $roleHierarchy;
 
-    public function __construct(RoleHierarchyInterface $roleHierarchy)
+    public function __construct(RoleHierarchyInterface $roleHierarchy, NameGenerator $nameGenerator)
     {
+        $this->nameGenerator = $nameGenerator;
         $this->roleHierarchy = $roleHierarchy;
     }
 
@@ -32,10 +44,10 @@ class AccessVoter implements VoterInterface
     protected function getSupportedAttributes()
     {
         return [
-            self::ATTRIB_ACTION_ACCESS,
-            self::ATTRIB_FIELD_GET,
-            self::ATTRIB_FIELD_SET,
-            self::ATTRIB_FILTER,
+            ActionDefinition::SECURITY_ATTRIBUTE,
+            Filter::SECURITY_ATTRIBUTE,
+            GetterField::SECURITY_ATTRIBUTE,
+            SetterField::SECURITY_ATTRIBUTE,
         ];
     }
 
@@ -45,9 +57,11 @@ class AccessVoter implements VoterInterface
     protected function getSupportedClasses()
     {
         return [
-            self::CLASS_ACTION,
             self::CLASS_FIELD,
             self::CLASS_FILTER,
+            self::INTERFACE_ACTION,
+            self::INTERFACE_FIELD,
+            self::INTERFACE_FILTER,
         ];
     }
 
@@ -75,18 +89,16 @@ class AccessVoter implements VoterInterface
 
     protected function attributeSupportByObject($attribute, $object)
     {
-        $class = get_class($object);
-
-        if ($attribute === self::ATTRIB_ACTION_ACCESS) {
-            if ($class !== self::CLASS_ACTION) {
+        if ($attribute === ActionDefinition::SECURITY_ATTRIBUTE) {
+            if (is_a($object, self::INTERFACE_ACTION) === true) {
                 return false;
             }
-        } else if ($attribute === self::ATTRIB_FILTER) {
-            if ($class !== self::CLASS_FILTER) {
+        } else if ($attribute === Filter::SECURITY_ATTRIBUTE) {
+            if (is_a($object, self::INTERFACE_FILTER) === false) {
                 return false;
             }
         } else {
-            if ($class !== self::CLASS_FIELD) {
+            if (is_a($object, self::INTERFACE_FILTER) === false) {
                 return false;
             }
         }
@@ -114,7 +126,7 @@ class AccessVoter implements VoterInterface
 
             // as soon as at least one attribute is supported, default is to deny access
             $vote = self::ACCESS_DENIED;
-            $acceptedRoles = Helper::createRolesForObject($attribute, $object);
+            $acceptedRoles = $object->getRoles($attribute);
 
             foreach ($roles as $role) {
                 foreach ($acceptedRoles as $acceptedRole) {

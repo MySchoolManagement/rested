@@ -1,54 +1,118 @@
 <?php
 namespace Rested\Transforms;
 
+use Rested\Definition\ActionDefinition;
+use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
+use Rested\Definition\Field;
+use Rested\Definition\GetterField;
+use Rested\Definition\Parameter;
+use Rested\Definition\ResourceDefinitionInterface;
+use Rested\Definition\SetterField;
+use Rested\FactoryInterface;
+use Rested\Http\ContextInterface;
+use Rested\UrlGeneratorInterface;
+
 class DefaultTransform implements TransformInterface
 {
 
+    /**
+     * @var \Rested\FactoryInterface
+     */
+    protected $factory;
 
+    /**
+     * @var \Rested\UrlGeneratorInterface
+     */
+    protected $urlGenerator;
 
-    public function export($instance, $expand = true, $forceAllFields = false)
+    public function __construct(FactoryInterface $factory, UrlGeneratorInterface $urlGenerator)
     {
-        $e = [];
-        $resource = $this->resourceDefinition->getResource();
-        $context = $forceAllFields ? null : $resource->getCurrentContext();
-        $href = $resource->createInstanceHref($instance);
+        $this->factory = $factory;
+        $this->urlGenerator = $urlGenerator;
+    }
 
-        if ($expand === true) {
-            $fields = $this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_GET);
-            $isEloquent = $instance instanceof EloquentModel;
+    /**
+     * {@inheritdoc}
+     */
+    public function apply(CompiledTransformMappingInterface $transformMapping, $locale, array $input, $instance = null)
+    {
+        if ($instance === null) {
+            $modelClass = $transformMapping->getModelClass();
+            $instance = new $modelClass();
+        }
 
-            foreach ($fields as $def) {
-                // a null context means all fields except expansions
-                if (($context === null) || ($forceAllFields === true) || ($context->wantsField($def->getName()) === true)) {
-                    $callable = $def->getGetter();
+        if (method_exists($instance, 'setLocale') === true) {
+            $instance->setLocale($locale);
+        }
 
-                    if ($callable !== null) {
-                        if (is_array($callable) === true) {
-                            $val = call_user_func($callable, $instance);
-                        } else {
-                            if ($isEloquent === true) {
-                                $val = $instance->getAttribute($callable);
-                            } else {
-                                $val = $instance->$callable();
-                            }
-                        }
+        // FIXME: we should filter out fields when data is supplied for a field that cannot be set?
+        foreach ($input as $key => $value) {
+            if (($field = $transformMapping->findField($key, SetterField::OPERATION)) !== null) {
+                $this->applyField($transformMapping, $instance, $field, $value);
+            }
+        }
 
-                        $e[$def->getName()] = $this->exportValue($def, $val);
+        return $instance;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function applyField(CompiledTransformMappingInterface $transformMapping, $instance, Field $field, $value)
+    {
+        $callback = $field->getCallback();
+        $this->setFieldValue($instance, $callback, $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function export(ContextInterface $context, CompiledTransformMappingInterface $transformMapping, $instance)
+    {
+        return $this->exportModel($context, $transformMapping, $instance);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function exportAll(ContextInterface $context, CompiledTransformMappingInterface $transformMapping, $instance)
+    {
+        return $this->exportModel($context, $transformMapping, $instance, true);
+    }
+
+    protected function exportModel(
+        ContextInterface $context,
+        TransformMappingInterface $transformMapping,
+        $instance,
+        $allFields = false)
+    {
+        $item = [];
+        $resourceDefinition = $context->getResourceDefinition();
+        $href = $this->makeUrlForInstance($resourceDefinition, $instance);
+
+        $fields = $transformMapping->getFields(GetterField::OPERATION);
+
+        foreach ($fields as $def) {
+            if (($allFields === true) || ($context->wantsField($def->getName()) === true)) {
+                $callable = $def->getCallback();
+
+                if ($callable !== null) {
+                    if (is_array($callable) === true) {
+                        $val = call_user_func($callable, $instance);
+                    } else {
+                        $val = $this->getFieldValue($instance, $callable);
                     }
+
+                    $item[$def->getName()] = $this->exportValue($def, $val);
                 }
             }
         }
 
-        // FIXME
-        return $resource->getFactory()->createInstanceResponse($resource, $href, $e, $instance);
+        return $this->factory->createInstanceResponse($resourceDefinition, $href, $item, $instance);
     }
 
-    public function exportAll($instance, $expand = true)
-    {
-        return $this->export($instance, $expand, true);
-    }
-
-    private function exportValue(Field $field, $value)
+    protected function exportValue(Field $field, $value)
     {
         $return = null;
 
@@ -59,7 +123,7 @@ class DefaultTransform implements TransformInterface
                 $return[$key] = $this->exportValue($field, $otherValue);
             }
         } else if ($value instanceof \DateTime) {
-            if ($field->getType() === Parameter::TYPE_DATE) {
+            if ($field->getDataType() === Parameter::TYPE_DATE) {
                 $return = $value->format('Y-m-d');
             } else {
                 $return = $value->format(\DateTime::ISO8601);
@@ -73,64 +137,44 @@ class DefaultTransform implements TransformInterface
 
         return $return;
     }
-    /**
-     * Using the mapping information, applies the field data in $data
-     * to $obj.
-     *
-     * @param string $locale
-     *            Locale of the data to set.
-     * @param array $data
-     *            Data to apply.
-     * @param object $obj
-     *            Object to apply the mapping to. If this is null, a new
-     *            instance is created.
-     */
-    public function apply($locale, array $data, $obj = null)
+
+    protected function getFieldValue($instance, $callable)
     {
-        $definition = $this->resourceDefinition;
-        $authChecker = $definition->getResource()->getAuthorizationChecker();
-
-        if ($obj === null) {
-            $class = $this->getDefiningClass();
-            $obj = new $class();
-        }
-
-        if (method_exists($obj, 'setLocale') === true) {
-            $obj->setLocale($locale);
-        }
-
-        // TODO: should we throw an exception when data is supplied for a field that cannot be set?
-        foreach ($data as $key => $value) {
-            if (($field = $this->findField($key)) !== null) {
-                if ($field->isModel() === true) {
-                    if ($authChecker->isGranted(AccessVoter::ATTRIB_FIELD_SET, $field) === false) {
-                        continue;
-                    }
-
-                    $this->applyField($obj, $field, $value);
-                }
-            }
-        }
-
-        return $obj;
+        return $instance->{$callable}();
     }
 
-    public function applyField($instance, Field $field, $value)
+    public function makeUrlForInstance(CompiledResourceDefinitionInterface $resourceDefinition, $instance)
     {
-        $isEloquent = $instance instanceof EloquentModel;
-        $setter = $field->getSetter();
+        $action = $resourceDefinition->findFirstAction(ActionDefinition::TYPE_INSTANCE);
 
-        if ($isEloquent === true) {
-            $instance->setAttribute($setter, $value);
-        } else {
-            $instance->{$setter}($value);
-        }
+        return $this->urlGenerator->route($action->getRouteName(), [
+            'id' => $this->retrieveIdFromInstance($action->getTransformMapping(), $instance),
+        ]);
     }
-    public function validate(array $data)
+
+    public function retrieveIdFromInstance(CompiledTransformMappingInterface $transformMapping, $instance)
+    {
+        $primaryField = $transformMapping->findPrimaryKeyField();
+
+        if ($primaryField !== null) {
+            return $this->getFieldValue($instance, $primaryField->getCallback());
+        }
+
+        return null;
+    }
+
+    protected function setFieldValue($instance, $callback, $value)
+    {
+        $instance->{$callback}($value);
+    }
+
+    public function validate(array $input)
     {
         $rules = [];
         $messages = [];
 
+        // FIXME: not implemented
+        return [];
         foreach ($this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
             if ($field->isModel() === true) {
                 $parameters = $field->getValidationParameters();
@@ -142,11 +186,11 @@ class DefaultTransform implements TransformInterface
             }
         }
 
-        $validator = Validator::make($data, $rules);
+        $validator = Validator::make($input, $rules);
 
         if ($validator->fails() === true) {
             $failed = $validator->failed();
-            $validationMessages = $validator->messages();;
+            $validationMessages = $validator->messages();
             $messages = [];
 
             foreach ($failed as $field => $rules) {

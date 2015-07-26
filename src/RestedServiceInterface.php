@@ -1,8 +1,7 @@
 <?php
 namespace Rested;
 
-use Rested\Definition\ResourceDefinition;
-use Symfony\Component\HttpFoundation\Request as HttpRequest;
+use Symfony\Component\HttpFoundation\Request as Request;
 
 interface RestedServiceInterface
 {
@@ -12,7 +11,12 @@ interface RestedServiceInterface
     /**
      * @return \Nocarrier\Hal
      */
-    public function execute($url, $method = HttpRequest::METHOD_GET, $data = [], &$statusCode = null);
+    public function execute($url, $method = Request::METHOD_GET, $data = [], &$statusCode = null);
+
+    /**
+     * @return null|\Rested\Definition\Compiled\CompiledActionDefinitionInterface
+     */
+    public function findActionByRouteName($routeName);
 
     /**
      * @return string[]
@@ -21,8 +25,8 @@ interface RestedServiceInterface
 
     /**
      * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param \Rested\Definition\ResourceDefinition $resourceDefinition
-     * @return \Rested\ImmutableContext
+     * @param \Rested\ResourceInterface $resource
+     * @return \Rested\Http\Context
      */
-    public function resolveContextFromRequest(HttpRequest $request, ResourceDefinition $resourceDefinition);
+    public function resolveContextFromRequest(Request $request, ResourceInterface $resource);
 }

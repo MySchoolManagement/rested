@@ -1,23 +1,87 @@
 <?php
 namespace Rested;
 
-use Rested\Definition\ActionDefinition;
+use Rested\Definition\ActionDefinitionInterface;
+use Rested\Definition\Field;
+use Rested\Definition\Filter;
+use Symfony\Component\Security\Core\Role\Role;
 
-class NameGenerator
+class NameGenerator implements NameGeneratorInterface
 {
 
     const ROUTE_PREFIX = 'rested_';
 
     /**
-     * Generates a route name for an action.
-     *
-     * @param \Rested\Definition\ActionDefinition $action Action to generate a route name for.
-     * @return string
+     * {@inheritdoc}
      */
-    public function routeName(ActionDefinition $action)
+    public function rolesForAction(ActionDefinitionInterface $action, $pathPrefix)
+    {
+        $name = $action->getId();
+        $loose = $this->roleName($pathPrefix);
+        $specific = $this->roleName($pathPrefix, $name);
+
+        return $this->makeRoles([$loose, $specific]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rolesForField(Field $field, $securityAttribute, $pathPrefix)
+    {
+        $roles = [
+            $this->roleName($pathPrefix, 'field', $field->getName()),
+            $this->roleName($pathPrefix, 'field', $field->getName(), $securityAttribute),
+            $this->roleName($pathPrefix, 'field', 'all'),
+            $this->roleName($pathPrefix, 'field', 'all', $securityAttribute),
+        ];
+
+        return $this->makeRoles($roles);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rolesForFilter(Filter $filter, $pathPrefix)
+    {
+        $roles = [
+            $this->roleName($pathPrefix, 'filter', $filter->getName()),
+            $this->roleName($pathPrefix, 'filter', 'all'),
+        ];
+
+        return $this->makeRoles($roles);
+    }
+
+    protected function makeRoles(array $roles)
+    {
+        foreach ($roles as $idx => $role) {
+            $roles[$idx] = new Role($role);
+        }
+
+        return $roles;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function roleName()
+    {
+        $options = [
+            'delimiter' => '_',
+        ];
+        $components = func_get_args();
+
+        array_unshift($components, 'ROLE_RESTED');
+
+        return mb_strtoupper($this->slugFromArray($components, $options));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function routeName(ActionDefinitionInterface $action, $prefix)
     {
         $components = [
-            $action->getDefinition()->getPath(),
+            $prefix,
             $action->getId(),
         ];
         $options = [
@@ -28,11 +92,7 @@ class NameGenerator
     }
 
     /**
-     * Generates a friendly slug from a list of strings.
-     *
-     * @param array $array Components to generate a slug from.
-     * @param array $options Options to customize the slug. See makeSlug.
-     * @return string
+     * {@inheritdoc}
      */
     public function slugFromArray(array $array = [], array $options = [])
     {
@@ -43,21 +103,9 @@ class NameGenerator
     }
 
     /**
-     * Create a web friendly URL slug from a string.
-     *
-     * Although supported, transliteration is discouraged because
-     *     1) most web browsers support UTF-8 characters in URLs
-     *     2) transliteration causes a loss of information
-     *
-     * @author Sean Murphy <sean@iamseanmurphy.com>
-     * @copyright Copyright 2012 Sean Murphy. All rights reserved.
-     * @license http://creativecommons.org/publicdomain/zero/1.0/
-     *
-     * @param string $str
-     * @param array $options
-     * @return string
+     * {@inheritdoc}
      */
-    public static function slug($str, $options = [])
+    public function slug($str, $options = [])
     {
         // Make sure string is in UTF-8 and strip invalid UTF-8 characters
         $str = mb_convert_encoding((string)$str, 'UTF-8', mb_list_encodings());
