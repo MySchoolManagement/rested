@@ -2,6 +2,7 @@
 namespace Rested;
 
 use Nocarrier\Hal;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 interface ResourceInterface
@@ -18,14 +19,19 @@ interface ResourceInterface
     public function abort($statusCode, array $attributes = []);
 
     /**
+     * @return \Rested\Definition\ResourceDefinitionInterface
+     */
+    public static function createResourceDefinition(FactoryInterface $factory);
+
+    /**
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function done(Hal $response = null, $statusCode = Response::HTTP_OK, $headers = []);
 
     /**
-     * @return \Rested\Definition\ResourceDefinitionInterface
+     * @return \Symfony\Component\HttpFoundation\Request
      */
-    public static function createResourceDefinition(FactoryInterface $factory);
+    public function extractDataFromRequest(Request $request);
 
     /**
      * The action that is currently executing.
@@ -56,4 +62,12 @@ interface ResourceInterface
      * @return \Rested\RestedServiceInterface
      */
     public function getRestedService();
+
+    /**
+     * Validates client input.
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @return array
+     */
+    public function validate(Request $request);
 }

@@ -143,6 +143,9 @@ class DefaultTransform implements TransformInterface
         return $instance->{$callable}();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function makeUrlForInstance(CompiledResourceDefinitionInterface $resourceDefinition, $instance)
     {
         $action = $resourceDefinition->findFirstAction(ActionDefinition::TYPE_INSTANCE);
@@ -152,6 +155,9 @@ class DefaultTransform implements TransformInterface
         ]);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function retrieveIdFromInstance(CompiledTransformMappingInterface $transformMapping, $instance)
     {
         $primaryField = $transformMapping->findPrimaryKeyField();
@@ -168,40 +174,11 @@ class DefaultTransform implements TransformInterface
         $instance->{$callback}($value);
     }
 
-    public function validate(array $input)
+    /**
+     * {@inheritdoc}
+     */
+    public function validate(CompiledTransformMappingInterface $transformMapping, array $input)
     {
-        $rules = [];
-        $messages = [];
-
-        // FIXME: not implemented
-        return [];
-        foreach ($this->filterFieldsForAccess(AccessVoter::ATTRIB_FIELD_SET) as $field) {
-            if ($field->isModel() === true) {
-                $parameters = $field->getValidationParameters();
-
-                // add a validator for the data type of this field
-                $parameters .= '|' . $field->getTypeValidatorName();
-
-                $rules[$field->getName()] = $parameters;
-            }
-        }
-
-        $validator = Validator::make($input, $rules);
-
-        if ($validator->fails() === true) {
-            $failed = $validator->failed();
-            $validationMessages = $validator->messages();
-            $messages = [];
-
-            foreach ($failed as $field => $rules) {
-                $messages[$field] = [];
-
-                foreach ($rules as $rule => $parameters) {
-                    $messages[$field][$rule] = $validationMessages->first($field);
-                }
-            }
-        }
-
-        return $messages;
+        return true;
     }
 }

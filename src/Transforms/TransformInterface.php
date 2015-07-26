@@ -1,7 +1,6 @@
 <?php
 namespace Rested\Transforms;
 
-use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\Definition\Field;
 use Rested\Http\ContextInterface;
@@ -9,8 +8,7 @@ use Rested\Http\ContextInterface;
 interface TransformInterface
 {
 
-
-    public function apply(CompiledTransformMappingInterface $transformMapping, $locale, array $data, $obj = null);
+    public function apply(CompiledTransformMappingInterface $transformMapping, $locale, array $input, $instance = null);
 
     public function applyField(CompiledTransformMappingInterface $transformMapping, $instance, Field $field, $value);
 
@@ -22,5 +20,5 @@ interface TransformInterface
 
     public function retrieveIdFrominstance(CompiledTransformMappingInterface $transformMapping, $instance);
 
-    public function validate(array $data);
+    public function validate(CompiledTransformMappingInterface $transformMapping, array $input);
 }

@@ -15,6 +15,7 @@ use Rested\Definition\GetterField;
 use Rested\Definition\Parameter;
 use Rested\Definition\ResourceDefinitionInterface;
 use Rested\Definition\SetterField;
+use Rested\FactoryInterface;
 use Rested\NameGeneratorInterface;
 use Rested\Transforms\CompiledDefaultTransformMapping;
 use Rested\Transforms\TransformMappingInterface;
@@ -27,30 +28,37 @@ class Compiler implements CompilerInterface
     /**
      * @var \Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface
      */
-    private $authorizationChecker;
+    protected $authorizationChecker;
+
+    /**
+     * @var \Rested\FactoryInterface
+     */
+    protected $factory;
 
     /**
      * @var \Rested\NameGeneratorInterface
      */
-    private $nameGenerator;
+    protected $nameGenerator;
 
     /**
      * @var \Rested\UrlGeneratorInterface
      */
-    private $urlGenerator;
+    protected $urlGenerator;
 
     /**
      * @var bool
      */
-    private $shouldApplyAccessControl;
+    protected $shouldApplyAccessControl;
 
     public function __construct(
+        FactoryInterface $factory,
         AuthorizationCheckerInterface $authorizationChecker,
         NameGeneratorInterface $nameGenerator,
         UrlGeneratorInterface $urlGenerator,
         $shouldApplyAccessControl = true)
     {
         $this->authorizationChecker = $authorizationChecker;
+        $this->factory = $factory;
         $this->nameGenerator = $nameGenerator;
         $this->shouldApplyAccessControl = $shouldApplyAccessControl;
         $this->urlGenerator = $urlGenerator;
@@ -66,6 +74,7 @@ class Compiler implements CompilerInterface
         $defaultTransformMapping = $this->compileTransformMapping($resourceDefinition->getDefaultTransformMapping(), $path);
 
         return new CompiledResourceDefinition(
+            $this->factory,
             $resourceDefinition->getPath(),
             $resourceDefinition->getName(),
             $resourceDefinition->getSummary(),

@@ -2,6 +2,7 @@
 namespace Rested\Definition\Compiled;
 
 use Rested\Definition\ResourceDefinition;
+use Rested\FactoryInterface;
 use Rested\Transforms\CompiledTransformMappingInterface;
 use Rested\Transforms\TransformInterface;
 
@@ -9,6 +10,7 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
 {
 
     public function __construct(
+        FactoryInterface $factory,
         $path, $name, $summary, $description,
         array $actions = [],
         TransformInterface $defaultTransform,
@@ -19,6 +21,7 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
         $this->defaultTransform = $defaultTransform;
         $this->defaultTransformMapping = $defaultTransformMapping;
         $this->description = $description;
+        $this->factory = $factory;
         $this->name = $name;
         $this->path = $path;
         $this->summary = $summary;

@@ -3,6 +3,7 @@ namespace Rested;
 
 use Nocarrier\Hal;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -44,6 +45,26 @@ trait Resource
         return new HttpResponse($json, $statusCode, $headers);
     }
 
+    public function extractDataFromRequest(Request $request)
+    {
+        if (in_array($request->getContentType(), ['json', 'application/json']) === true) {
+            $input = (array) json_decode($request->getContent(), true);
+        } else {
+            $input = $request->request->all();
+        }
+
+        // set empty strings to null
+        return array_map(function($x) {
+            $x = preg_replace('/(^\s+)|(\s+$)/us', '', $x);
+
+            if ((is_string($x) === true) && (mb_strlen($x) === 0)) {
+                return null;
+            }
+
+            return $x;
+        }, $input);
+    }
+
     /**
      * @return \Rested\Definition\ActionDefinition
      */
@@ -76,10 +97,33 @@ trait Resource
             $this->abort(HttpResponse::HTTP_UNAUTHORIZED);
         }
 
-        if (in_array($request->getMethod(), [HttpRequest::METHOD_PATCH, HttpRequest::METHOD_POST, HttpRequest::METHOD_PUT]) === true) {
+        $validatable = [
+            HttpRequest::METHOD_DELETE,
+            HttpRequest::METHOD_PATCH,
+            HttpRequest::METHOD_POST,
+            HttpRequest::METHOD_PUT,
+        ];
+
+        if (in_array($request->getMethod(), $validatable) === true) {
             $this->validate($request);
         }
 
         return call_user_func_array([$this, $controller], func_get_args());
+    }
+
+    public function validate(Request $request)
+    {
+        $action = $this->getCurrentAction();
+        $transform = $action->getTransform();
+        $transformMapping = $action->getTransformMapping();
+        $input = $this->extractDataFromRequest($request);
+
+        $messages = $transform->validate($transformMapping, $input);
+
+        if (sizeof($messages) > 0) {
+            $this->abort(HttpResponse::HTTP_UNPROCESSABLE_ENTITY, [
+                'validation_messages' => $messages,
+            ]);
+        }
     }
 }

@@ -2,6 +2,7 @@
 namespace Rested\Definition;
 
 use Rested\Exceptions\ActionExistsException;
+use Rested\FactoryInterface;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
@@ -30,6 +31,11 @@ class ResourceDefinition implements ResourceDefinitionInterface
     protected $defaultTransformMapping;
 
     /**
+     * @var \Rested\FactoryInterface
+     */
+    protected $factory;
+
+    /**
      * @var string
      */
     protected $name;
@@ -51,10 +57,11 @@ class ResourceDefinition implements ResourceDefinitionInterface
      * @param \Rested\Transforms\Transforminterface $defaultTansform The default transform that is assigned ot actions.
      * @param \Rested\Transforms\TransformMappingInterface $defaultTransformMapping The default model that is assigned to actions.
      */
-    public function __construct($name, TransformInterface $defaultTansform, TransformMappingInterface $defaultTransformMapping)
+    public function __construct(FactoryInterface $factory, $name, TransformInterface $defaultTansform, TransformMappingInterface $defaultTransformMapping)
     {
         $this->defaultTransform = $defaultTansform;
         $this->defaultTransformMapping = $defaultTransformMapping;
+        $this->factory = $factory;
         $this->name = $name;
     }
 
@@ -111,8 +118,12 @@ class ResourceDefinition implements ResourceDefinitionInterface
      */
     public function addDeleteAction($id = 'delete', $type = Parameter::TYPE_UUID)
     {
+        $modelClass = $this->getDefaultTransformMapping()->getModelClass();
+        $emptyTransformMapping = $this->factory->createTransformMapping($modelClass);
+
         $action = $this->addAction(ActionDefinition::TYPE_DELETE, $id);
         $action->addToken('id', $type);
+        $action->setTransformMapping($emptyTransformMapping);
 
         return $action;
     }
