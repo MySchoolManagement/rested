@@ -62,7 +62,7 @@ class Compiler implements CompilerInterface
     public function compile(ResourceDefinitionInterface $resourceDefinition)
     {
         $path = $resourceDefinition->getPath();
-        $actions = $this->filterAndCompileActionDefinitions($resourceDefinition->getActions(), $path);
+        $actions = $this->compileAndFilterActionDefinitions($resourceDefinition->getActions(), $path);
         $defaultTransformMapping = $this->compileTransformMapping($resourceDefinition->getDefaultTransformMapping(), $path);
 
         return new CompiledResourceDefinition(
@@ -99,6 +99,49 @@ class Compiler implements CompilerInterface
             $actionDefinition->getTransform(),
             $this->compileTransformMapping($actionDefinition->getTransformMapping(), $path)
         );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function compileAndFilterActionDefinitions(array $actions, $path)
+    {
+        $actions = array_map(
+            function($value) use ($path) {
+                return $this->compileActionDefinition($value, $path);
+            },
+            $actions
+        );
+
+        return $this->filterActionDefinitions($actions);
+    }
+
+    protected function compileAndFilterFields(array $fields, $securityAttribute, $path)
+    {
+        $fields = array_map(
+            function($value) use ($path) {
+                if (is_a($value, GetterField::class) === true) {
+                    return $this->compileGetterField($value, $path);
+                } else {
+                    return $this->compileSetterField($value, $path);
+                }
+            },
+            $fields
+        );
+
+        return $this->filterFields($fields, $securityAttribute);
+    }
+
+    protected function compileAndFilterFilters(array $filters, $path)
+    {
+        $filters = array_map(
+            function($value) use($path) {
+                return $this->compileFilter($value, $path);
+            },
+            $filters
+        );
+
+        return $this->filterFilters($filters);
     }
 
     protected function compileFilter(Filter $filter, $path)
@@ -144,11 +187,11 @@ class Compiler implements CompilerInterface
     {
         $fields = [
             GetterField::OPERATION =>
-                $this->filterAndCompileFields($transformMapping->getFields(GetterField::OPERATION), GetterField::SECURITY_ATTRIBUTE, $path),
+                $this->compileAndFilterFields($transformMapping->getFields(GetterField::OPERATION), GetterField::SECURITY_ATTRIBUTE, $path),
             SetterField::OPERATION =>
-                $this->filterAndCompileFields($transformMapping->getFields(SetterField::OPERATION), SetterField::SECURITY_ATTRIBUTE, $path),
+                $this->compileAndFilterFields($transformMapping->getFields(SetterField::OPERATION), SetterField::SECURITY_ATTRIBUTE, $path),
         ];
-        $filters = $this->filterAndCompileFilters($transformMapping->getFilters(), $path);
+        $filters = $this->compileAndFilterFilters($transformMapping->getFilters(), $path);
 
         return new CompiledDefaultTransformMapping(
             $transformMapping->getModelClass(),
@@ -174,34 +217,6 @@ class Compiler implements CompilerInterface
             function ($value) {
                 return $this->authorizationChecker->isGranted(ActionDefinition::SECURITY_ATTRIBUTE, $value);
             }
-        );
-    }
-
-    protected function filterAndCompileFields(array $fields, $securityAttribute, $path)
-    {
-        $fields = $this->filterFields($fields, $securityAttribute);
-
-        return array_map(
-            function($value) use ($path) {
-                if (is_a($value, GetterField::class) === true) {
-                    return $this->compileGetterField($value, $path);
-                } else {
-                    return $this->compileSetterField($value, $path);
-                }
-            },
-            $fields
-        );
-    }
-
-    protected function filterAndCompileFilters(array $filters, $path)
-    {
-        $filters = $this->filterFilters($filters);
-
-        return array_map(
-            function($value) use($path) {
-                return $this->compileFilter($value, $path);
-            },
-            $filters
         );
     }
 
@@ -238,22 +253,6 @@ class Compiler implements CompilerInterface
             }
         );
     }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function filterAndCompileActionDefinitions(array $actions, $path)
-    {
-        $actions = $this->filterActionDefinitions($actions);
-
-        return array_map(
-            function($value) use ($path) {
-                return $this->compileActionDefinition($value, $path);
-            },
-            $actions
-        );
-    }
-
 
     /**
      * Generates a Url for an action.

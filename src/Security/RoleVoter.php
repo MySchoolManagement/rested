@@ -14,10 +14,6 @@ use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 class RoleVoter implements VoterInterface
 {
 
-    const CLASS_FIELD = 'Rested\Definition\Field';
-    const CLASS_FILTER = 'Rested\Definition\Filter';
-
-    const INTERFACE_ACTION = 'Rested\Definition\ActionDefinitionInterface';
     const INTERFACE_COMPILED_ACTION = 'Rested\Definition\Compiled\CompiledActionDefinitionInterface';
     const INTERFACE_COMPILED_FIELD = 'Rested\Definition\Compiled\CompiledFieldInterface';
     const INTERFACE_COMPILED_FILTER = 'Rested\Definition\Compiled\CompiledFilterInterface';
@@ -57,11 +53,9 @@ class RoleVoter implements VoterInterface
     protected function getSupportedClasses()
     {
         return [
-            self::CLASS_FIELD,
-            self::CLASS_FILTER,
-            self::INTERFACE_ACTION,
-            self::INTERFACE_FIELD,
-            self::INTERFACE_FILTER,
+            self::INTERFACE_COMPILED_ACTION,
+            self::INTERFACE_COMPILED_FIELD,
+            self::INTERFACE_COMPILED_FILTER,
         ];
     }
 
@@ -90,15 +84,15 @@ class RoleVoter implements VoterInterface
     protected function attributeSupportByObject($attribute, $object)
     {
         if ($attribute === ActionDefinition::SECURITY_ATTRIBUTE) {
-            if (is_a($object, self::INTERFACE_ACTION) === true) {
+            if (is_a($object, self::INTERFACE_COMPILED_ACTION) === false) {
                 return false;
             }
         } else if ($attribute === Filter::SECURITY_ATTRIBUTE) {
-            if (is_a($object, self::INTERFACE_FILTER) === false) {
+            if (is_a($object, self::INTERFACE_COMPILED_FILTER) === false) {
                 return false;
             }
         } else {
-            if (is_a($object, self::INTERFACE_FILTER) === false) {
+            if (is_a($object, self::INTERFACE_COMPILED_FIELD) === false) {
                 return false;
             }
         }
@@ -117,7 +111,7 @@ class RoleVoter implements VoterInterface
 
         // abstain vote by default in case none of the attributes are supported
         $vote = self::ACCESS_ABSTAIN;
-        $roles = $this->roleHierarchy->getReachableRoles($this->extractRoles($token));
+        $roles = $this->extractRoles($token);
 
         foreach ($attributes as $attribute) {
             if ($this->attributeSupportByObject($attribute, $object) === false) {
@@ -142,12 +136,23 @@ class RoleVoter implements VoterInterface
 
     protected function extractRoles(TokenInterface $token)
     {
-        if ($token->getUsername() === 'anon.') {
-            return [
-                new Role('ROLE_PUBLIC'),
-            ];
+        // FIXME: this is the definition of a hack
+        if (property_exists($token, 'reachableRoles') === true) {
+            return $token->reachableRoles;
         }
 
-        return $token->getRoles();
+        $roles = [];
+
+        if ($token->getUsername() === 'anon.') {
+            $roles = [
+                new Role('ROLE_PUBLIC'),
+            ];
+        } else {
+            $roles = $token->getRoles();
+        }
+
+        $token->reachableRoles = $this->roleHierarchy->getReachableRoles($roles);
+
+        return $roles;
     }
 }
