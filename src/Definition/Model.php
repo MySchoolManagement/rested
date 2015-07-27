@@ -337,7 +337,7 @@ class Model
         }
 
         $response = $resource->getFactory()->createInstanceResponse($resource, $href, $e, $instance);
-        $this->exportEmbeds($response, $instance);
+        //$this->exportEmbeds($response, $instance);
 
         return $response;
     }
