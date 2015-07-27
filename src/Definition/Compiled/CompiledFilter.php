@@ -1,7 +1,7 @@
 <?php
 namespace Rested\Definition\Compiled;
 
-use Rested\Definition\Filter;
+use Rested\Definition\Filter;;
 
 class CompiledFilter extends Filter implements CompiledFilterInterface
 {

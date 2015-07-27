@@ -43,6 +43,11 @@ interface ActionDefinitionInterface
     public function getHttpMethod();
 
     /**
+     * @return \Rested\Definition\ResourceDefinitionInterface
+     */
+    public function getResourceDefinition();
+
+    /**
      * @return string
      */
     public function getSummary();

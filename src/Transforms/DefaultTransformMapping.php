@@ -1,6 +1,7 @@
 <?php
 namespace Rested\Transforms;
 
+use Ramsey\Uuid\Uuid;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
@@ -15,6 +16,11 @@ class DefaultTransformMapping implements TransformMappingInterface
         GetterField::OPERATION => [],
         SetterField::OPERATION => [],
     ];
+
+    /**
+     * @var \Ramsey\Uuid\string
+     */
+    protected $compilerId;
 
     /**
      * @var callable
@@ -44,6 +50,7 @@ class DefaultTransformMapping implements TransformMappingInterface
     public function __construct($modelClass)
     {
         $this->modelClass = $modelClass;
+        $this->compilerId = Uuid::uuid4()->toString();
     }
 
     /**
@@ -84,6 +91,14 @@ class DefaultTransformMapping implements TransformMappingInterface
         $this->links[$rel] = $routeName;
 
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCompilerId()
+    {
+        return $this->compilerId;
     }
 
     /**

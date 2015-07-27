@@ -1,6 +1,8 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Transforms\TransformMappingInterface;
+
 class SetterField extends Field
 {
 
@@ -11,7 +13,7 @@ class SetterField extends Field
     /**
      * @var string[]
      */
-    private $validationParameters = [];
+    protected $validationParameters = [];
 
     public function __construct($name, $callback, $description, $dataType, $rel = null, $validationParameters = [])
     {

@@ -1,6 +1,8 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Transforms\TransformMappingInterface;
+
 abstract class Field
 {
 

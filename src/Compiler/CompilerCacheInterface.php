@@ -2,6 +2,7 @@
 namespace Rested\Compiler;
 
 use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 
 interface CompilerCacheInterface
 {
@@ -16,5 +17,8 @@ interface CompilerCacheInterface
      * @param \Rested\Definition\Compiled\CompiledActionDefinitionInterface $action The action to cache.
      * @return void
      */
-    public function registerAction($routeName, CompiledActionDefinitionInterface $action);
+    public function registerAction(
+        $routeName,
+        CompiledActionDefinitionInterface $action
+    );
 }

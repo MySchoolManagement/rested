@@ -1,6 +1,8 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Transforms\TransformMappingInterface;
+
 class Filter
 {
 
@@ -9,22 +11,22 @@ class Filter
     /**
      * @var callable
      */
-    private $callback;
+    protected $callback;
 
     /**
      * @var string
      */
-    private $dataType;
+    protected $dataType;
 
     /**
      * @var string
      */
-    private $description;
+    protected $description;
 
     /**
      * @var string
      */
-    private $name;
+    protected $name;
 
     public function __construct($name, $callback, $description, $dataType)
     {

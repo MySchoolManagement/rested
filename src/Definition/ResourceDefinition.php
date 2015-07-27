@@ -77,7 +77,7 @@ class ResourceDefinition implements ResourceDefinitionInterface
         }
 
         // FIXME: should use a factory
-        return ($this->actions[] = new ActionDefinition($this->defaultTransform, $this->defaultTransformMapping, $type, $id));
+        return ($this->actions[] = new ActionDefinition($this, $this->defaultTransform, $this->defaultTransformMapping, $type, $id));
     }
 
     /**

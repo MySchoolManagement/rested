@@ -25,6 +25,10 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
         $this->name = $name;
         $this->path = $path;
         $this->summary = $summary;
+
+        foreach ($actions as $action) {
+            $action->setResourceDefinition($this);
+        }
     }
 
     /**

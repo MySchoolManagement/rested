@@ -5,7 +5,6 @@ namespace Rested\Definition\Compiled;
 use Rested\Definition\ActionDefinition;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
-use Symfony\Component\Security\Core\Role\RoleInterface;
 
 class CompiledActionDefinition extends ActionDefinition implements CompiledActionDefinitionInterface
 {
@@ -21,7 +20,7 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
     protected $relativeEndpointUrl;
 
     /**
-     * @var Symfony\Component\Security\Core\Role\RoleInterface
+     * @var \Symfony\Component\Security\Core\Role\RoleInterface
      */
     protected $roles;
 
@@ -72,5 +71,15 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
     public function getRouteName()
     {
         return $this->routeName;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setResourceDefinition(CompiledResourceDefinitionInterface $resourceDefinition)
+    {
+        $this->resourceDefinition = $resourceDefinition;
+
+        return $this;
     }
 }

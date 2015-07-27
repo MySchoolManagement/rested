@@ -26,6 +26,11 @@ class Compiler implements CompilerInterface
 {
 
     /**
+     * @var \Rested\Transforms\CompiledTransformMappingInterface[]
+     */
+    protected $transformMappingCache = [];
+
+    /**
      * @var \Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface
      */
     protected $authorizationChecker;
@@ -52,12 +57,10 @@ class Compiler implements CompilerInterface
 
     public function __construct(
         FactoryInterface $factory,
-        AuthorizationCheckerInterface $authorizationChecker,
         NameGeneratorInterface $nameGenerator,
         UrlGeneratorInterface $urlGenerator,
         $shouldApplyAccessControl = true)
     {
-        $this->authorizationChecker = $authorizationChecker;
         $this->factory = $factory;
         $this->nameGenerator = $nameGenerator;
         $this->shouldApplyAccessControl = $shouldApplyAccessControl;
@@ -70,7 +73,7 @@ class Compiler implements CompilerInterface
     public function compile(ResourceDefinitionInterface $resourceDefinition)
     {
         $path = $resourceDefinition->getPath();
-        $actions = $this->compileAndFilterActionDefinitions($resourceDefinition->getActions(), $path);
+        $actions = $this->compileActionDefinitions($resourceDefinition->getActions(), $path);
         $defaultTransformMapping = $this->compileTransformMapping($resourceDefinition->getDefaultTransformMapping(), $path);
 
         return new CompiledResourceDefinition(
@@ -113,21 +116,19 @@ class Compiler implements CompilerInterface
     /**
      * {@inheritdoc}
      */
-    protected function compileAndFilterActionDefinitions(array $actions, $path)
+    protected function compileActionDefinitions(array $actions, $path)
     {
-        $actions = array_map(
+        return array_map(
             function($value) use ($path) {
                 return $this->compileActionDefinition($value, $path);
             },
             $actions
         );
-
-        return $this->filterActionDefinitions($actions);
     }
 
-    protected function compileAndFilterFields(array $fields, $securityAttribute, $path)
+    protected function compileFields(array $fields, $path)
     {
-        $fields = array_map(
+        return array_map(
             function($value) use ($path) {
                 if (is_a($value, GetterField::class) === true) {
                     return $this->compileGetterField($value, $path);
@@ -137,20 +138,16 @@ class Compiler implements CompilerInterface
             },
             $fields
         );
-
-        return $this->filterFields($fields, $securityAttribute);
     }
 
-    protected function compileAndFilterFilters(array $filters, $path)
+    protected function compileFilters(array $filters, $path)
     {
-        $filters = array_map(
+        return array_map(
             function($value) use($path) {
                 return $this->compileFilter($value, $path);
             },
             $filters
         );
-
-        return $this->filterFilters($filters);
     }
 
     protected function compileFilter(Filter $filter, $path)
@@ -194,15 +191,21 @@ class Compiler implements CompilerInterface
      */
     protected function compileTransformMapping(TransformMappingInterface $transformMapping, $path)
     {
+        $compilerId = $transformMapping->getCompilerId();
+
+        if (array_key_exists($compilerId, $this->transformMappingCache) === true) {
+            return $this->transformMappingCache[$compilerId];
+        }
+
         $fields = [
             GetterField::OPERATION =>
-                $this->compileAndFilterFields($transformMapping->getFields(GetterField::OPERATION), GetterField::SECURITY_ATTRIBUTE, $path),
+                $this->compileFields($transformMapping->getFields(GetterField::OPERATION), $path),
             SetterField::OPERATION =>
-                $this->compileAndFilterFields($transformMapping->getFields(SetterField::OPERATION), SetterField::SECURITY_ATTRIBUTE, $path),
+                $this->compileFields($transformMapping->getFields(SetterField::OPERATION), $path),
         ];
-        $filters = $this->compileAndFilterFilters($transformMapping->getFilters(), $path);
+        $filters = $this->compileFilters($transformMapping->getFilters(), $path);
 
-        return new CompiledDefaultTransformMapping(
+        $compiledTransformMapping = new CompiledDefaultTransformMapping(
             $transformMapping->getModelClass(),
             $transformMapping->getPrimaryKeyFieldName(),
             $fields,
@@ -210,6 +213,8 @@ class Compiler implements CompilerInterface
             $transformMapping->getLinks(),
             $transformMapping->getFieldFilterCallback()
         );
+
+        return $this->transformMappingCache[$compilerId] = $compiledTransformMapping;
     }
 
     /**

@@ -28,4 +28,9 @@ interface CompiledActionDefinitionInterface extends ActionDefinitionInterface
      * @return string
      */
     public function getRouteName();
+
+    /**
+     * @return $this
+     */
+    public function setResourceDefinition(CompiledResourceDefinitionInterface $resourceDefinition);
 }

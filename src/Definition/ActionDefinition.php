@@ -102,6 +102,7 @@ class ActionDefinition implements ActionDefinitionInterface
      * @param string $id Name of the action. This is used to construct role names, Url's, etc.
      */
     public function __construct(
+        ResourceDefinitionInterface $resourceDefinition,
         TransformInterface $defaultTransform,
         TransformMappingInterface $defaultTransformMapping,
         $type,
@@ -119,6 +120,7 @@ class ActionDefinition implements ActionDefinitionInterface
         $this->id = $id;
         $this->defaultTransform = $defaultTransform;
         $this->defaultTransformMapping = $defaultTransformMapping;
+        $this->resourceDefinition = $resourceDefinition;
         $this->type = $type;
         $this->httpMethod = self::httpMethodFromType($type);
     }
@@ -180,6 +182,14 @@ class ActionDefinition implements ActionDefinitionInterface
     public function getHttpMethod()
     {
         return $this->httpMethod;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getResourceDefinition()
+    {
+        return $this->resourceDefinition;
     }
 
     /**

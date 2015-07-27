@@ -20,6 +20,11 @@ interface TransformMappingInterface
     public function addLink($rel, $routeName);
 
     /**
+     * @return string
+     */
+    public function getCompilerId();
+
+    /**
      * @return \Rested\Definition\Field[]
      */
     public function executeFieldFilterCallback($operation, $instance = null);

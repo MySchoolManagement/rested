@@ -2,6 +2,7 @@
 namespace Rested\Compiler;
 
 use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
+use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 
 class CompilerCache implements CompilerCacheInterface
 {
@@ -26,7 +27,9 @@ class CompilerCache implements CompilerCacheInterface
     /**
      * {@inheritdoc}
      */
-    public function registerAction($routeName, CompiledActionDefinitionInterface $action)
+    public function registerAction(
+        $routeName,
+        CompiledActionDefinitionInterface $action)
     {
         $this->actionCache[$routeName] = $action;
     }

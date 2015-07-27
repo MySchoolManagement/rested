@@ -18,7 +18,7 @@ class Parameter
     /**
      * @var string
      */
-    private $type;
+    private $dataType;
 
     /**
      * @var string
