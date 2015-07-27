@@ -62,7 +62,7 @@ class Parameter
      */
     public function expects($type)
     {
-        return ($this->type === $type);
+        return ($this->dataType === $type);
     }
 
     /**
