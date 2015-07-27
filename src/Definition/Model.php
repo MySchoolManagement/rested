@@ -337,7 +337,7 @@ class Model
         }
 
         $response = $resource->getFactory()->createInstanceResponse($resource, $href, $e, $instance);
-        //$this->exportEmbeds($response, $instance);
+        $this->exportEmbeds($response, $instance);
 
         return $response;
     }
@@ -350,12 +350,12 @@ class Model
 
         $embeds = $this->filterEmbedsForAccess();
         $resource = $this->resourceDefinition->getResource();
-        $context = $resource->getCurrentContext();
+        $context = $resource->getCurrentRequest() ? $resource->getCurrentContext() : null;
 
         foreach ($embeds as $embed) {
             $name = $embed->getName();
 
-            if ($context->wantsEmbeddable($name) === false) {
+            if (($context === null) || ($context->wantsEmbeddable($name) === false)) {
                 continue;
             }
 
