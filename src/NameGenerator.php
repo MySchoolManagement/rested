@@ -67,6 +67,7 @@ class NameGenerator implements NameGeneratorInterface
     {
         $options = [
             'delimiter' => '_',
+            'lowercase' => false,
         ];
         $components = func_get_args();
 
@@ -189,7 +190,9 @@ class NameGenerator implements NameGeneratorInterface
         );
 
         // Make custom replacements
-        $str = preg_replace(array_keys($options['replacements']), $options['replacements'], $str);
+        if (sizeof($options['replacements']) > 0) {
+            $str = preg_replace(array_keys($options['replacements']), $options['replacements'], $str);
+        }
 
         // Transliterate characters to ASCII
         if ($options['transliterate']) {
@@ -201,9 +204,6 @@ class NameGenerator implements NameGeneratorInterface
 
         // Remove duplicate delimiters
         $str = preg_replace('/(' . preg_quote($options['delimiter'], '/') . '){2,}/', '$1', $str);
-
-        // Truncate slug to max. characters
-        $str = mb_substr($str, 0, ($options['limit'] ? $options['limit'] : mb_strlen($str, 'UTF-8')), 'UTF-8');
 
         // Remove delimiter from ends
         $str = trim($str, $options['delimiter']);
