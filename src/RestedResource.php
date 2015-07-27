@@ -114,7 +114,7 @@ trait RestedResource
                 continue;
             }*/
 
-            if (($value = $this->getFilter($filter->getName())) !== null) {
+            if (($value = $context->getFilterValue($filter->getName())) !== null) {
                 if ($value === 'null') {
                     $value = null;
                 }
