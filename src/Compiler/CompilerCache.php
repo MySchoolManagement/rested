@@ -1,36 +1,42 @@
 <?php
 namespace Rested\Compiler;
 
-use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class CompilerCache implements CompilerCacheInterface
 {
 
     /**
-     * @var CompiledActionDefinitionInterface[]
+     * @var CompiledResourceDefinitionInterface[]
      */
-    protected $actionCache = [];
+    protected $resourceDefinitions = [];
 
     /**
      * {@inheritdoc}
      */
-    public function findActionByRouteName($routeName)
+    public function findResourceDefinition($routeName, AuthorizationCheckerInterface $authorizationChecker = null)
     {
-        if (array_key_exists($routeName, $this->actionCache) === true) {
-            return $this->actionCache[$routeName];
+        $resourceDefinition = null;
+
+        if (array_key_exists($routeName, $this->resourceDefinitions) === true) {
+            $resourceDefinition = $this->resourceDefinitions[$routeName];
         }
 
-        return null;
+        if (($authorizationChecker !== null) && ($resourceDefinition !== null)) {
+            $resourceDefinition->applyAccessControl($authorizationChecker);
+        }
+
+        return $resourceDefinition;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function registerAction(
+    public function registerResourceDefinition(
         $routeName,
-        CompiledActionDefinitionInterface $action)
+        CompiledResourceDefinitionInterface $resourceDefinition)
     {
-        $this->actionCache[$routeName] = $action;
+        $this->resourceDefinitions[$routeName] = $resourceDefinition;
     }
 }

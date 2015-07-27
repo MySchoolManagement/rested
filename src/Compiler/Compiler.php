@@ -5,11 +5,9 @@ use Rested\Definition\ActionDefinition;
 use Rested\Definition\ActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledActionDefinition;
 use Rested\Definition\Compiled\CompiledFilter;
-use Rested\Definition\Compiled\CompiledFilterField;
 use Rested\Definition\Compiled\CompiledGetterField;
 use Rested\Definition\Compiled\CompiledResourceDefinition;
 use Rested\Definition\Compiled\CompiledSetterField;
-use Rested\Definition\Field;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\Parameter;
@@ -20,7 +18,6 @@ use Rested\NameGeneratorInterface;
 use Rested\Transforms\CompiledDefaultTransformMapping;
 use Rested\Transforms\TransformMappingInterface;
 use Rested\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class Compiler implements CompilerInterface
 {
@@ -215,57 +212,6 @@ class Compiler implements CompilerInterface
         );
 
         return $this->transformMappingCache[$compilerId] = $compiledTransformMapping;
-    }
-
-    /**
-     * @return \Rested\Definition\ActionDefinitionInterface[]
-     */
-    protected function filterActionDefinitions(array $actions)
-    {
-        if ($this->shouldApplyAccessControl === false) {
-            return $actions;
-        }
-
-        return array_filter(
-            $actions,
-            function ($value) {
-                return $this->authorizationChecker->isGranted(ActionDefinition::SECURITY_ATTRIBUTE, $value);
-            }
-        );
-    }
-
-    /**
-     * @return \Rested\Definition\Field[]
-     */
-    protected function filterFields(array $fields, $securityAttribute)
-    {
-        if ($this->shouldApplyAccessControl === false) {
-            return $fields;
-        }
-
-        return array_filter(
-            $fields,
-            function ($value) use ($securityAttribute) {
-                return $this->authorizationChecker->isGranted($securityAttribute, $value);
-            }
-        );
-    }
-
-    /**
-     * @return \Rested\Definition\Filter[]
-     */
-    protected function filterFilters(array $filters)
-    {
-        if ($this->shouldApplyAccessControl === false) {
-            return $filters;
-        }
-
-        return array_filter(
-            $filters,
-            function ($value) {
-                return $this->authorizationChecker->isGranted(Filter::SECURITY_ATTRIBUTE, $value);
-            }
-        );
     }
 
     /**

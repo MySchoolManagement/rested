@@ -1,21 +1,27 @@
 <?php
 namespace Rested\Definition\Compiled;
 
+use Rested\Definition\ActionDefinition;
 use Rested\Definition\ResourceDefinition;
 use Rested\FactoryInterface;
 use Rested\Transforms\CompiledTransformMappingInterface;
 use Rested\Transforms\TransformInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class CompiledResourceDefinition extends ResourceDefinition implements CompiledResourceDefinitionInterface
 {
+
+    /**
+     * @var bool
+     */
+    protected $accessControlApplied = false;
 
     public function __construct(
         FactoryInterface $factory,
         $path, $name, $summary, $description,
         array $actions = [],
         TransformInterface $defaultTransform,
-        CompiledTransformMappingInterface $defaultTransformMapping
-    )
+        CompiledTransformMappingInterface $defaultTransformMapping)
     {
         $this->actions = $actions;
         $this->defaultTransform = $defaultTransform;
@@ -28,6 +34,25 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
 
         foreach ($actions as $action) {
             $action->setResourceDefinition($this);
+        }
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function applyAccessControl(AuthorizationCheckerInterface $authorizationChecker)
+    {
+        if ($this->accessControlApplied === false) {
+            $this->actions = array_filter(
+                $this->actions,
+                function ($value) use ($authorizationChecker) {
+                    return $authorizationChecker->isGranted(ActionDefinition::SECURITY_ATTRIBUTE, $value);
+                }
+            );
+
+            $this->accessControlApplied = true;
+            $this->defaultTransformMapping->applyAccessControl($authorizationChecker);
         }
     }
 
@@ -44,61 +69,5 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
         }
 
         return null;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getActions()
-    {
-        return $this->actions;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getModelClass()
-    {
-        return $this->getDefaultTransformMapping()->getModelClass();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefaultTransformMapping()
-    {
-        return $this->defaultTransformMapping;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getDescription()
-    {
-        return $this->description;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getPath()
-    {
-        return $this->path;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getSummary()
-    {
-        return $this->summary;
     }
 }

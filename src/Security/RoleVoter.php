@@ -141,8 +141,6 @@ class RoleVoter implements VoterInterface
             return $token->reachableRoles;
         }
 
-        $roles = [];
-
         if ($token->getUsername() === 'anon.') {
             $roles = [
                 new Role('ROLE_PUBLIC'),
@@ -153,6 +151,6 @@ class RoleVoter implements VoterInterface
 
         $token->reachableRoles = $this->roleHierarchy->getReachableRoles($roles);
 
-        return $roles;
+        return $token->reachableRoles;
     }
 }
