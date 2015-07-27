@@ -108,20 +108,20 @@ class NameGenerator implements NameGeneratorInterface
     public function slug($str, $options = [])
     {
         // Make sure string is in UTF-8 and strip invalid UTF-8 characters
-        $str = mb_convert_encoding((string)$str, 'UTF-8', mb_list_encodings());
+        $str = mb_convert_encoding((string) $str, 'UTF-8', mb_list_encodings());
 
-        $defaults = array(
+        $defaults = [
             'delimiter' => '-',
             'limit' => null,
             'lowercase' => true,
             'replacements' => [],
             'transliterate' => false,
-        );
+        ];
 
         // Merge options
         $options = array_merge($defaults, $options);
 
-        $char_map = [
+        $char_map = array(
             // Latin
             '?' => 'A', '?' => 'A', '?' => 'A', '?' => 'A', '?' => 'A', '?' => 'A', '?' => 'AE', '?' => 'C',
             '?' => 'E', '?' => 'E', '?' => 'E', '?' => 'E', '?' => 'I', '?' => 'I', '?' => 'I', '?' => 'I',
@@ -186,7 +186,7 @@ class NameGenerator implements NameGeneratorInterface
             '?' => 'S', '?' => 'u', '?' => 'Z',
             '?' => 'a', '?' => 'c', '?' => 'e', '?' => 'g', '?' => 'i', '?' => 'k', '?' => 'l', '?' => 'n',
             '?' => 's', '?' => 'u', '?' => 'z'
-        ];
+        );
 
         // Make custom replacements
         $str = preg_replace(array_keys($options['replacements']), $options['replacements'], $str);
