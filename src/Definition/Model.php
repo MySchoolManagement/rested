@@ -361,7 +361,7 @@ class Model
 
             if (array_key_exists($name, $models) === false) {
                 // FIXME: provide a nicer way to do this
-                $this->modelCache[$name] = app('rested_students_instance')
+                $this->modelCache[$name] = app($embed->getRouteName())
                     ->getDefinition()
                     ->findAction(ActionDefinition::TYPE_INSTANCE)
                     ->getModel()
