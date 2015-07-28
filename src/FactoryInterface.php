@@ -16,16 +16,6 @@ interface FactoryInterface
         $total = 0);
 
     /**
-     * @return \Rested\Compiler\CompilerInterface
-     */
-    public function createCompiler($shouldApplyAccessControl = true);
-
-    /**
-     * @return \Rested\Compiler\CompilerCacheInterface
-     */
-    public function createCompilerCache();
-
-    /**
      * @return \Rested\Http\ContextInterface
      */
     public function createContext(

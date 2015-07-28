@@ -4,10 +4,12 @@ namespace Rested\Compiler;
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\ActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledActionDefinition;
+use Rested\Definition\Compiled\CompiledEmbed;
 use Rested\Definition\Compiled\CompiledFilter;
 use Rested\Definition\Compiled\CompiledGetterField;
 use Rested\Definition\Compiled\CompiledResourceDefinition;
 use Rested\Definition\Compiled\CompiledSetterField;
+use Rested\Definition\Embed;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\Parameter;
@@ -123,6 +125,26 @@ class Compiler implements CompilerInterface
         );
     }
 
+    protected function compileEmbeds(array $embeds, $path)
+    {
+        return array_map(
+            function($value) use($path) {
+                return $this->compileEmbed($value, $path);
+            },
+            $embeds
+        );
+    }
+
+    protected function compileEmbed(Embed $embed, $path)
+    {
+        return new CompiledEmbed(
+            $this->nameGenerator->rolesForEmbed($embed, $path),
+            $embed->getName(),
+            $embed->getRouteName(),
+            $embed->getUserData()
+        );
+    }
+
     protected function compileFields(array $fields, $path)
     {
         return array_map(
@@ -201,10 +223,12 @@ class Compiler implements CompilerInterface
                 $this->compileFields($transformMapping->getFields(SetterField::OPERATION), $path),
         ];
         $filters = $this->compileFilters($transformMapping->getFilters(), $path);
+        $embeds = $this->compileEmbeds($transformMapping->getEmbeds(), $path);
 
         $compiledTransformMapping = new CompiledDefaultTransformMapping(
             $transformMapping->getModelClass(),
             $transformMapping->getPrimaryKeyFieldName(),
+            $embeds,
             $fields,
             $filters,
             $transformMapping->getLinks(),

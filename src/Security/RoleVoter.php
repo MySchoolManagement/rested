@@ -2,6 +2,7 @@
 namespace Rested\Security;
 
 use Rested\Definition\ActionDefinition;
+use Rested\Definition\Embed;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
@@ -15,6 +16,7 @@ class RoleVoter implements VoterInterface
 {
 
     const INTERFACE_COMPILED_ACTION = 'Rested\Definition\Compiled\CompiledActionDefinitionInterface';
+    const INTERFACE_COMPILED_EMBED = 'Rested\Definition\Compiled\CompiledEmbedInterface';
     const INTERFACE_COMPILED_FIELD = 'Rested\Definition\Compiled\CompiledFieldInterface';
     const INTERFACE_COMPILED_FILTER = 'Rested\Definition\Compiled\CompiledFilterInterface';
 
@@ -41,6 +43,7 @@ class RoleVoter implements VoterInterface
     {
         return [
             ActionDefinition::SECURITY_ATTRIBUTE,
+            Embed::SECURITY_ATTRIBUTE,
             Filter::SECURITY_ATTRIBUTE,
             GetterField::SECURITY_ATTRIBUTE,
             SetterField::SECURITY_ATTRIBUTE,
@@ -54,6 +57,7 @@ class RoleVoter implements VoterInterface
     {
         return [
             self::INTERFACE_COMPILED_ACTION,
+            self::INTERFACE_COMPILED_EMBED,
             self::INTERFACE_COMPILED_FIELD,
             self::INTERFACE_COMPILED_FILTER,
         ];
@@ -85,6 +89,10 @@ class RoleVoter implements VoterInterface
     {
         if ($attribute === ActionDefinition::SECURITY_ATTRIBUTE) {
             if (is_a($object, self::INTERFACE_COMPILED_ACTION) === false) {
+                return false;
+            }
+        } else if ($attribute === Embed::SECURITY_ATTRIBUTE) {
+            if (is_a($object, self::INTERFACE_COMPILED_EMBED) === false) {
                 return false;
             }
         } else if ($attribute === Filter::SECURITY_ATTRIBUTE) {

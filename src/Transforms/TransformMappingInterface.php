@@ -7,6 +7,11 @@ interface TransformMappingInterface
     /**
      * @return $this
      */
+    public function addEmbed($name, $routeName, array $userData = []);
+
+    /**
+     * @return $this
+     */
     public function addField($name, $dataType, $getter, $setter, $description, $validationParameters = null, $rel = null);
 
     /**
@@ -38,6 +43,11 @@ interface TransformMappingInterface
      * @return null|\Rested\Definition\Field
      */
     public function findPrimaryKeyField();
+
+    /**
+     * @return \Rested\Definition\Embed[]
+     */
+    public function getEmbeds();
 
     /**
      * @return null|callable

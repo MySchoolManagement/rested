@@ -2,6 +2,7 @@
 namespace Rested;
 
 use Rested\Definition\ActionDefinitionInterface;
+use Rested\Definition\Embed;
 use Rested\Definition\Field;
 use Rested\Definition\Filter;
 use Symfony\Component\Security\Core\Role\Role;
@@ -21,6 +22,19 @@ class NameGenerator implements NameGeneratorInterface
         $specific = $this->roleName($pathPrefix, $name);
 
         return $this->makeRoles([$loose, $specific]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rolesForEmbed(Embed $embed, $pathPrefix)
+    {
+        $roles = [
+            $this->roleName($pathPrefix, 'embed', $embed->getName()),
+            $this->roleName($pathPrefix, 'embed', 'all'),
+        ];
+
+        return $this->makeRoles($roles);
     }
 
     /**

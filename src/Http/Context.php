@@ -116,10 +116,10 @@ class Context implements ContextInterface
     /**
      * {@inheritdoc}
      */
-    public function wantsEmbeddable($name)
+    public function wantsEmbed($name)
     {
         if ((array_key_exists('all', $this->parameters['embed']) === true)
-            || (array_key_exists($name, $this->parameters['embed']) === true)) {
+            || (in_array($name, $this->parameters['embed']) === true)) {
             return true;
         }
 

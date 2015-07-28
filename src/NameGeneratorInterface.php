@@ -2,6 +2,7 @@
 namespace Rested;
 
 use Rested\Definition\ActionDefinitionInterface;
+use Rested\Definition\Embed;
 use Rested\Definition\Field;
 use Rested\Definition\Filter;
 
@@ -12,6 +13,11 @@ interface NameGeneratorInterface
      * @return \Symfony\Component\Security\Core\Role\RoleInterface[]
      */
     public function rolesForAction(ActionDefinitionInterface $action, $pathPrefix);
+
+    /**
+     * @return \Symfony\Component\Security\Core\Role\RoleInterface[]
+     */
+    public function rolesForEmbed(Embed $embed, $pathPrefix);
 
     /**
      * @return \Symfony\Component\Security\Core\Role\RoleInterface[]

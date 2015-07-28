@@ -1,9 +1,11 @@
 <?php
 namespace Rested\Transforms;
 
+use Rested\Compiler\CompilerCacheInterface;
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
+use Rested\Definition\Embed;
 use Rested\Definition\Field;
 use Rested\Definition\GetterField;
 use Rested\Definition\Parameter;
@@ -11,10 +13,16 @@ use Rested\Definition\ResourceDefinitionInterface;
 use Rested\Definition\SetterField;
 use Rested\FactoryInterface;
 use Rested\Http\ContextInterface;
+use Rested\Http\InstanceResponse;
 use Rested\UrlGeneratorInterface;
 
 class DefaultTransform implements TransformInterface
 {
+
+    /**
+     * @var \Rested\Compiler\CompilerCacheInterface
+     */
+    protected $compilerCache;
 
     /**
      * @var \Rested\FactoryInterface
@@ -26,8 +34,9 @@ class DefaultTransform implements TransformInterface
      */
     protected $urlGenerator;
 
-    public function __construct(FactoryInterface $factory, UrlGeneratorInterface $urlGenerator)
+    public function __construct(FactoryInterface $factory, CompilerCacheInterface $compilerCache, UrlGeneratorInterface $urlGenerator)
     {
+        $this->compilerCache = $compilerCache;
         $this->factory = $factory;
         $this->urlGenerator = $urlGenerator;
     }
@@ -81,14 +90,61 @@ class DefaultTransform implements TransformInterface
         return $this->exportModel($context, $transformMapping, $instance, true);
     }
 
+    protected function exportEmbeds(
+        CompiledTransformMappingInterface $transformMapping,
+        ContextInterface $context,
+        InstanceResponse $response,
+        $instance)
+    {
+        $embeds = $transformMapping->getEmbeds();
+
+        foreach ($embeds as $embed) {
+            $name = $embed->getName();
+
+            if (($context === null) || ($context->wantsEmbed($name) === false)) {
+                continue;
+            }
+
+            $routeName = $embed->getRouteName();
+            $embedResourceDefinition = $this->compilerCache->findResourceDefinition($routeName);
+
+            if ($embedResourceDefinition !== null) {
+                $embedAction = $embedResourceDefinition->findActionByRouteName($routeName);
+
+                if ($embedAction !== null) {
+                    $embedTransform = $embedAction->getTransform();
+                    $embedTransformMapping = $embedAction->getTransformMapping();
+
+                    $value = $this->getEmbedValue($embedTransform, $embedTransformMapping, $embed, $instance);
+
+                    if ($value === null) {
+                        // $response->addResource($name, null, false);
+                    } else if (is_array($value) === true) {
+                        $items = [];
+
+                        foreach ($value as $item) {
+                            $export = $embedTransform->exportAll($context, $embedTransformMapping, $item);
+                            $items[] = $response->addResource($name, $export, false);
+                        }
+
+                        $response->addResource($name, $this->factory->createCollectionResponse($embedResourceDefinition, $items));
+                    } else {
+                        $export = $embedTransform->exportAll($context, $embedTransformMapping, $value);
+                        $response->addResource($name, $export, false);
+                    }
+                }
+            }
+        }
+    }
+
     protected function exportModel(
         ContextInterface $context,
-        TransformMappingInterface $transformMapping,
+        CompiledTransformMappingInterface $transformMapping,
         $instance,
         $allFields = false)
     {
         $item = [];
-        $resourceDefinition = $context->getResourceDefinition();
+        $resourceDefinition = $this->compilerCache->findResourceDefinitionForModelClass(get_class($instance));
         $href = $this->makeUrlForInstance($resourceDefinition, $instance);
 
         $fields = $transformMapping->getFields(GetterField::OPERATION);
@@ -109,7 +165,10 @@ class DefaultTransform implements TransformInterface
             }
         }
 
-        return $this->factory->createInstanceResponse($resourceDefinition, $href, $item, $instance);
+        $response = $this->factory->createInstanceResponse($resourceDefinition, $href, $item, $instance);
+        $this->exportEmbeds($transformMapping, $context, $response, $instance);
+
+        return $response;
     }
 
     protected function exportValue(Field $field, $value)
@@ -136,6 +195,15 @@ class DefaultTransform implements TransformInterface
         }
 
         return $return;
+    }
+
+    protected function getEmbedValue(
+        TransformInterface $transform,
+        CompiledTransformMappingInterface $transformMapping,
+        Embed $embed,
+        $instance)
+    {
+        return null;
     }
 
     protected function getFieldValue($instance, $callable)

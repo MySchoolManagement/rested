@@ -48,7 +48,7 @@ interface ContextInterface
     /**
      * @return bool
      */
-    public function wantsEmbeddable($name);
+    public function wantsEmbed($name);
 
     /**
      * @return bool

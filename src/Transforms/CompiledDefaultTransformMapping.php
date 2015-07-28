@@ -1,6 +1,7 @@
 <?php
 namespace Rested\Transforms;
 
+use Rested\Definition\Embed;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
@@ -14,8 +15,9 @@ class CompiledDefaultTransformMapping extends DefaultTransformMapping implements
      */
     protected $accessControlApplied = false;
 
-    public function __construct($modelClass, $primaryKeyFieldName, $fields, $filters, $links, $fieldFilterCallback = null)
+    public function __construct($modelClass, $primaryKeyFieldName, array $embeds, array $fields, array $filters, array $links, $fieldFilterCallback = null)
     {
+        $this->embeds = $embeds;
         $this->fieldsByOperation = $fields;
         $this->fieldFilterCallback = $fieldFilterCallback;
         $this->filters = $filters;
@@ -31,12 +33,26 @@ class CompiledDefaultTransformMapping extends DefaultTransformMapping implements
     public function applyAccessControl(AuthorizationCheckerInterface $authorizationChecker)
     {
         if ($this->accessControlApplied === false) {
+            $this->filterEmbeds($authorizationChecker);
             $this->filterFields($authorizationChecker, GetterField::OPERATION, GetterField::SECURITY_ATTRIBUTE);
             $this->filterFields($authorizationChecker, SetterField::OPERATION, SetterField::SECURITY_ATTRIBUTE);
             $this->filterFilters($authorizationChecker);
 
             $this->accessControlApplied = true;
         }
+    }
+
+    /**
+     * @return void
+     */
+    protected function filterEmbeds(AuthorizationCheckerInterface $authorizationChecker)
+    {
+        $this->embeds = array_filter(
+            $this->embeds,
+            function ($value) use($authorizationChecker) {
+                return $authorizationChecker->isGranted(Embed::SECURITY_ATTRIBUTE, $value);
+            }
+        );
     }
 
     /**

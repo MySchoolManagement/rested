@@ -6,6 +6,9 @@ use Rested\Definition\Parameter;
 class RequestParser
 {
 
+    const DEFAULT_LIMIT = 50;
+    const DEFAULT_OFFSET = 0;
+
     /**
      * @var array
      */
@@ -13,8 +16,8 @@ class RequestParser
         'embed' => '',
         'fields' => '',
         'filters' => [],
-        'limit' => 0,
-        'offset' => 0,
+        'limit' => self::DEFAULT_LIMIT,
+        'offset' => self::DEFAULT_OFFSET,
     ];
 
     /**
@@ -65,8 +68,8 @@ class RequestParser
             new Parameter('embed', Parameter::TYPE_STRING, '', 'List of sub-records to embed.'),
             new Parameter('fields', Parameter::TYPE_STRING, '', 'List of fields to provide for each item.'),
             new Parameter('filters', Parameter::TYPE_ARRAY, [], 'List of filters to apply.'),
-            new Parameter('limit', Parameter::TYPE_INT, 50, 'How many items are to be fetched?'),
-            new Parameter('offset', Parameter::TYPE_INT, 0, 'At what offset should we start fetching items?')
+            new Parameter('limit', Parameter::TYPE_INT, self::DEFAULT_LIMIT, 'How many items are to be fetched?'),
+            new Parameter('offset', Parameter::TYPE_INT, self::DEFAULT_OFFSET, 'At what offset should we start fetching items?')
         ];
     }
 

@@ -4,6 +4,7 @@
   "keywords": ["rest"],
   "require": {
     "php": ">=5.5.9",
+    "league/url": "4.0.x",
     "nocarrier/hal": "dev-master",
     "ramsey/uuid": "3.0.x-dev"
   },

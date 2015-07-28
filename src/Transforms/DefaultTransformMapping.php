@@ -2,6 +2,7 @@
 namespace Rested\Transforms;
 
 use Ramsey\Uuid\Uuid;
+use Rested\Definition\Embed;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
@@ -21,6 +22,11 @@ class DefaultTransformMapping implements TransformMappingInterface
      * @var \Ramsey\Uuid\string
      */
     protected $compilerId;
+
+    /**
+     * @var \Rested\Definition\Embed[]
+     */
+    protected $embeds = [];
 
     /**
      * @var callable
@@ -51,6 +57,16 @@ class DefaultTransformMapping implements TransformMappingInterface
     {
         $this->modelClass = $modelClass;
         $this->compilerId = Uuid::uuid4()->toString();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addEmbed($name, $routeName, array $userData = [])
+    {
+        $this->embeds[] = new Embed($name, $routeName, $userData);
+
+        return $this;
     }
 
     /**
@@ -135,6 +151,14 @@ class DefaultTransformMapping implements TransformMappingInterface
     public function findPrimaryKeyField()
     {
         return $this->findField($this->primaryKeyFieldName, GetterField::OPERATION);
+    }
+
+    /**
+     * @return \Rested\Definition\Embed[]
+     */
+    public function getEmbeds()
+    {
+        return $this->embeds;
     }
 
     /**
