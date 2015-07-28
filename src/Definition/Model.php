@@ -369,7 +369,7 @@ class Model
             }
 
             $model = $this->modelCache[$name];
-            $values = $instance->{$embed->getUserData()['rel']};
+            $values = $instance->getAttribute($embed->getUserData()['rel']);
 
             if ($values instanceof Collection) {
                 $items = [];
