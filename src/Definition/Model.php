@@ -371,7 +371,9 @@ class Model
             $model = $this->modelCache[$name];
             $values = $instance->getAttribute($embed->getUserData()['rel']);
 
-            if ($values instanceof Collection) {
+            if ($values === null) {
+                // $response->addResource($name, null, false);
+            } else if ($values instanceof Collection) {
                 $items = [];
 
                 foreach ($values as $value) {
