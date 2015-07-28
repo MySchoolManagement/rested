@@ -19,9 +19,11 @@ class CollectionResponse extends Response
         array $items,
         $total)
     {
+        $count = sizeof($items);
+
         parent::__construct($restedService, $urlGenerator, $href, [
-            'count' => sizeof($items),
-            'total' => $total,
+            'count' => $count,
+            'total' => ($total !== null) ? $total : $count,
         ]);
 
         $this->setResource('items', $items);

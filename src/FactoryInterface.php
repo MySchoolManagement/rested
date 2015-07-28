@@ -13,7 +13,7 @@ interface FactoryInterface
         CompiledResourceDefinitionInterface $resourceDefinition,
         $href,
         array $items = [],
-        $total = 0);
+        $total = null);
 
     /**
      * @return \Rested\Http\ContextInterface

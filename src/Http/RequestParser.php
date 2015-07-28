@@ -26,37 +26,36 @@ class RequestParser
      */
     protected function convertDottedNotation(array &$source)
     {
+        $out = [];
+
         foreach ($source as $k => $v) {
-            $left = null;
-            $index = null;
-            $value = null;
+            $ptr = &$out;
 
             if (mb_strpos($v, '.') !== false) {
                 $parts = explode('.', $v);
-                $left = $parts[0];
-                $index = null;
-                $value = $parts[1];
+
+                for ($i = 0; $i < sizeof($parts); $i++) {
+                    $isLast = (sizeof($parts) - 1) === $i;
+                    $value = $parts[$i];
+
+                    if ($isLast === true) {
+                        $ptr[] = $value;
+                    } else {
+                        if (array_key_exists($value, $ptr) === false) {
+                            $ptr[$value] = [];
+                        }
+
+                        $ptr = &$ptr[$value];
+                    }
+                }
             } else if (mb_strpos($k, '.') !== false) {
-                $parts = explode('.', $k);
-                $left = $parts[0];
-                $index = $parts[1];
-                $value = $v;
+
             } else {
-                continue;
+                $ptr[] = $v;
             }
-
-            if (array_key_exists($left, $source) === false) {
-                $source[$left] = [];
-            }
-
-            if ($index !== null) {
-                $source[$left][$index] = $value;
-            } else {
-                $source[$left][] = $value;
-            }
-
-            unset($source[$k]);
         }
+
+        $source = $out;
     }
 
     /**

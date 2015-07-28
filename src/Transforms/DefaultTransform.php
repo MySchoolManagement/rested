@@ -13,6 +13,7 @@ use Rested\Definition\ResourceDefinitionInterface;
 use Rested\Definition\SetterField;
 use Rested\FactoryInterface;
 use Rested\Http\ContextInterface;
+use Rested\Http\EmbedContext;
 use Rested\Http\InstanceResponse;
 use Rested\UrlGeneratorInterface;
 
@@ -114,22 +115,23 @@ class DefaultTransform implements TransformInterface
                 if ($embedAction !== null) {
                     $embedTransform = $embedAction->getTransform();
                     $embedTransformMapping = $embedAction->getTransformMapping();
+                    $embedContext = EmbedContext::create($embedResourceDefinition, $context, $name);
 
                     $value = $this->getEmbedValue($embedTransform, $embedTransformMapping, $embed, $instance);
 
                     if ($value === null) {
                         // $response->addResource($name, null, false);
-                    } else if (is_array($value) === true) {
+                    } else if ((is_array($value) === true) || (is_a($value, '\Traversable') === true)) {
                         $items = [];
 
                         foreach ($value as $item) {
-                            $export = $embedTransform->exportAll($context, $embedTransformMapping, $item);
-                            $items[] = $response->addResource($name, $export, false);
+                            $export = $embedTransform->export($embedContext, $embedTransformMapping, $item);
+                            $items[] = $export;
                         }
 
-                        $response->addResource($name, $this->factory->createCollectionResponse($embedResourceDefinition, $items));
+                        $response->addResource($name, $this->factory->createCollectionResponse($embedResourceDefinition, null, $items), false);
                     } else {
-                        $export = $embedTransform->exportAll($context, $embedTransformMapping, $value);
+                        $export = $embedTransform->export($embedContext, $embedTransformMapping, $value);
                         $response->addResource($name, $export, false);
                     }
                 }

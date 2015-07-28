@@ -28,8 +28,8 @@ class Context implements ContextInterface
         'embed' => [],
         'fields' => [],
         'filters' => [],
-        'limit' => 0,
-        'offset' => 0,
+        'limit' => RequestParser::DEFAULT_LIMIT,
+        'offset' => RequestParser::DEFAULT_OFFSET,
     ];
 
     public function __construct(
@@ -63,9 +63,9 @@ class Context implements ContextInterface
     /**
      * {@inheritdoc}
      */
-    public function getResourceDefinition()
+    public function getEmbeds()
     {
-        return $this->resourceDefinition;
+        return $this->parameters['embed'];
     }
 
     /**
@@ -79,6 +79,14 @@ class Context implements ContextInterface
     /**
      * {@inheritdoc}
      */
+    public function getFilters()
+    {
+        return $this->parameters['filters'];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getFilterValue($name)
     {
         if ((array_key_exists($name, $this->parameters['filters']) === true)
@@ -87,6 +95,14 @@ class Context implements ContextInterface
         }
 
         return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getResourceDefinition()
+    {
+        return $this->resourceDefinition;
     }
 
     /**
@@ -119,6 +135,7 @@ class Context implements ContextInterface
     public function wantsEmbed($name)
     {
         if ((array_key_exists('all', $this->parameters['embed']) === true)
+            || (array_key_exists($name, $this->parameters['embed']) === true)
             || (in_array($name, $this->parameters['embed']) === true)) {
             return true;
         }

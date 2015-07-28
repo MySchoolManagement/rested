@@ -15,14 +15,19 @@ interface ContextInterface
     public function getAction();
 
     /**
-     * @return \Rested\Definition\Compiled\CompiledResourceDefinitionInterface
+     * @return string[]
      */
-    public function getResourceDefinition();
+    public function getEmbeds();
 
     /**
      * @return string[]
      */
     public function getFields();
+
+    /**
+     * @return array
+     */
+    public function getFilters();
 
     /**
      * @param string $name
@@ -44,6 +49,11 @@ interface ContextInterface
      * @return int
      */
     public function getOffset();
+
+    /**
+     * @return \Rested\Definition\Compiled\CompiledResourceDefinitionInterface
+     */
+    public function getResourceDefinition();
 
     /**
      * @return bool

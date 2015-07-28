@@ -1,6 +1,9 @@
 <?php
 namespace Rested\Http;
 
+use League\Url\Schemes\Http as HttpUri;
+use League\Url\Url;
+
 class RequestBuilder
 {
 
@@ -110,8 +113,29 @@ class RequestBuilder
     /**
      * @return string
      */
-    public function toString()
+    public function toUrl()
     {
+        $query = [];
 
+        if (sizeof($this->fields) > 0) {
+            $query['fields'] = join(',', $this->fields);
+        }
+
+        if (sizeof($this->embeds) > 0) {
+            $query['embed'] = join(',', $this->embeds);
+        }
+
+        if (sizeof($this->filters) > 0) {
+            $query['filters'] = [];
+
+            foreach ($this->filters as $k => $v) {
+                $query['filters'][$k] => $v;
+            }
+        }
+
+        $url = Url::createFromUrl($this->path);
+        $url->mergeQuery($query);
+
+        return (string) $url;
     }
 }
