@@ -2,9 +2,16 @@
 namespace Rested\Definition\Compiled;
 
 use Rested\Definition\ActionDefinitionInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 interface CompiledActionDefinitionInterface extends ActionDefinitionInterface
 {
+
+    /**
+     * @param \Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface $authorizationChecker
+     * @return void
+     */
+    public function applyAccessControl(AuthorizationCheckerInterface $authorizationChecker);
 
     /**
      * Gets the generated Url for this action.

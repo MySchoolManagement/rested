@@ -37,7 +37,6 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
         }
     }
 
-
     /**
      * {@inheritdoc}
      */
@@ -47,7 +46,12 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
             $this->actions = array_filter(
                 $this->actions,
                 function ($value) use ($authorizationChecker) {
-                    return $authorizationChecker->isGranted(ActionDefinition::SECURITY_ATTRIBUTE, $value);
+                    if ($authorizationChecker->isGranted(ActionDefinition::SECURITY_ATTRIBUTE, $value) === true) {
+                        $value->applyAccessControl($authorizationChecker);
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             );
 

@@ -55,10 +55,12 @@ trait Resource
 
         // set empty strings to null
         return array_map(function($x) {
-            $x = preg_replace('/(^\s+)|(\s+$)/us', '', $x);
+            if (is_string($x) === true) {
+                $x = preg_replace('/(^\s+)|(\s+$)/us', '', $x);
 
-            if ((is_string($x) === true) && (mb_strlen($x) === 0)) {
-                return null;
+                if (mb_strlen($x) === 0) {
+                    return null;
+                }
             }
 
             return $x;

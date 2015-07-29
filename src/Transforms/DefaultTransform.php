@@ -1,6 +1,7 @@
 <?php
 namespace Rested\Transforms;
 
+use Psy\Context;
 use Rested\Compiler\CompilerCacheInterface;
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
@@ -106,22 +107,33 @@ class DefaultTransform implements TransformInterface
                 continue;
             }
 
-            $routeName = $embed->getRouteName();
-            $embedResourceDefinition = $this->compilerCache->findResourceDefinition($routeName);
+            $object = $this->exportEmbed($context, $response, $embed, $instance);
 
-            if ($embedResourceDefinition !== null) {
-                $embedAction = $embedResourceDefinition->findActionByRouteName($routeName);
+            if ($object !== null) {
+                $response->addResource($name, $object, false);
+            }
+        }
+    }
 
-                if ($embedAction !== null) {
-                    $embedTransform = $embedAction->getTransform();
-                    $embedTransformMapping = $embedAction->getTransformMapping();
-                    $embedContext = EmbedContext::create($embedResourceDefinition, $context, $name);
+    protected function exportEmbed(ContextInterface $context, Embed $embed, $instance)
+    {
+        $routeName = $embed->getRouteName();
+        $embedResourceDefinition = $this->compilerCache->findResourceDefinition($routeName);
 
-                    $value = $this->getEmbedValue($embedTransform, $embedTransformMapping, $embed, $instance);
+        if ($embedResourceDefinition !== null) {
+            $embedAction = $embedResourceDefinition->findActionByRouteName($routeName);
 
-                    if ($value === null) {
-                        // $response->addResource($name, null, false);
-                    } else if ((is_array($value) === true) || (is_a($value, '\Traversable') === true)) {
+            if ($embedAction !== null) {
+                $embedTransform = $embedAction->getTransform();
+                $embedTransformMapping = $embedAction->getTransformMapping();
+                $embedContext = EmbedContext::create($embedResourceDefinition, $context, $embed->getName());
+
+                $value = $this->getEmbedValue($embedTransform, $embedTransformMapping, $embed, $instance);
+
+                if ($value === null) {
+
+                } else {
+                    if ((is_array($value) === true) || (is_a($value, '\Traversable') === true)) {
                         $items = [];
 
                         foreach ($value as $item) {
@@ -129,18 +141,19 @@ class DefaultTransform implements TransformInterface
                             $items[] = $export;
                         }
 
-                        $response->addResource($name, $this->factory->createCollectionResponse($embedResourceDefinition, null, $items), false);
+                        return $this->factory->createCollectionResponse($embedResourceDefinition, null, $items);
                     } else {
-                        $export = $embedTransform->export($embedContext, $embedTransformMapping, $value);
-                        $response->addResource($name, $export, false);
+                        return $embedTransform->export($embedContext, $embedTransformMapping, $value);
                     }
                 }
             }
         }
+
+        return null;
     }
 
     protected function exportModel(
-        ContextInterface $context,
+        ContextInterface $context = null,
         CompiledTransformMappingInterface $transformMapping,
         $instance,
         $allFields = false)

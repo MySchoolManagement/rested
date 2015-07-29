@@ -5,6 +5,7 @@ namespace Rested\Definition\Compiled;
 use Rested\Definition\ActionDefinition;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class CompiledActionDefinition extends ActionDefinition implements CompiledActionDefinitionInterface
 {
@@ -13,6 +14,11 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
      * @var string
      */
     protected $absoluteEndpointUrl;
+
+    /**
+     * @var bool
+     */
+    protected $accessControlApplied = false;
 
     /**
      * @var string
@@ -47,6 +53,17 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
         $this->transformMapping = $transformMapping;
         $this->type = $type;
         $this->tokens = $tokens;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function applyAccessControl(AuthorizationCheckerInterface $authorizationChecker)
+    {
+        if ($this->accessControlApplied === false) {
+            $this->accessControlApplied = true;
+            $this->transformMapping->applyAccessControl($authorizationChecker);
+        }
     }
 
     /**

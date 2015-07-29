@@ -12,9 +12,9 @@ interface TransformInterface
 
     public function applyField(CompiledTransformMappingInterface $transformMapping, $instance, Field $field, $value);
 
-    public function export(ContextInterface $context, CompiledTransformMappingInterface $transformMapping, $instance);
+    public function export(ContextInterface $context = null, CompiledTransformMappingInterface $transformMapping, $instance);
 
-    public function exportAll(ContextInterface $context, CompiledTransformMappingInterface $transformMapping, $instance);
+    public function exportAll(ContextInterface $context = null, CompiledTransformMappingInterface $transformMapping, $instance);
 
     public function makeUrlForInstance(CompiledResourceDefinitionInterface $resourceDefinition, $instance);
 
