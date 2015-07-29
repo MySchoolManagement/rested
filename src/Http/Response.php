@@ -57,7 +57,8 @@ abstract class Response extends Hal
                 $this->addFiltersToLink('self', $action);
             }
 
-            if (in_array($action->getType(), $which) === false) {
+            if ((in_array($action->getType(), $which) === false)
+                || ($action->isAffordanceAvailable($instance) === false)) {
                 continue;
             }
 
