@@ -380,7 +380,7 @@ class Model
                     $items[] = $model->exportAll($value);
                 }
 
-                $response->addResource($name, $resource->getFactory()->createCollectionResponse($resource, $items));
+                $response->addResource($name, $resource->getFactory()->createCollectionResponse($resource, $items), false);
             } else {
                 $response->addResource($name, $model->exportAll($values), false);
             }
