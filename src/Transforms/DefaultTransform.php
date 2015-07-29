@@ -107,7 +107,7 @@ class DefaultTransform implements TransformInterface
                 continue;
             }
 
-            $object = $this->exportEmbed($context, $response, $embed, $instance);
+            $object = $this->exportEmbed($context, $embed, $instance);
 
             if ($object !== null) {
                 $response->addResource($name, $object, false);
