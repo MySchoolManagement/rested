@@ -123,9 +123,13 @@ abstract class Response extends Hal
             $links = array_merge($links, $transformMapping->getLinks());
         }
 
-        // TODO: we probably should not be making urls
         if ($action->getType() !== ActionDefinition::TYPE_CREATE) {
             $url = $transform->makeUrlForInstance($resourceDefinition, $instance);
+
+            // FIXME: we should not be making urls
+            if ($action->shouldAppendId() === true) {
+                $url .= '/' . $action->getId();
+            }
         }
 
         $this->data['_actions'][] = [
