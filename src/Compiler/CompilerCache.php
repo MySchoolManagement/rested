@@ -2,6 +2,9 @@
 namespace Rested\Compiler;
 
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
+use Rested\FactoryInterface;
+use Rested\Transforms\DefaultTransform;
+use Rested\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class CompilerCache implements CompilerCacheInterface
@@ -13,14 +16,24 @@ class CompilerCache implements CompilerCacheInterface
     protected $authorizationChecker;
 
     /**
-     * @var CompiledResourceDefinitionInterface[]
+     * @var \Rested\FactoryInterface
      */
-    public $resourceDefinitions = [];
+    protected $factory;
 
     /**
      * @var CompiledResourceDefinitionInterface[]
      */
-    public $resourceDefinitionsByModel = [];
+    protected $resourceDefinitions = [];
+
+    /**
+     * @var CompiledResourceDefinitionInterface[]
+     */
+    protected $resourceDefinitionsByModel = [];
+
+    /**
+     * @var \Rested\UrlGeneratorInterface
+     */
+    protected $urlGenerator;
 
     /**
      * @param \Rested\Definition\Compiled\CompiledResourceDefinitionInterface|null $resourceDefinition
@@ -68,6 +81,20 @@ class CompilerCache implements CompilerCacheInterface
     /**
      * {@inheritdoc}
      */
+    public function hydrate($data)
+    {
+        $data = unserialize($data);
+        $this->resourceDefinitions = $data['resourceDefinitions'];
+        $this->resourceDefinitionsByModel = $data['resourceDefinitionsByModel'];
+
+        foreach (DefaultTransform::$hydrate as $transform) {
+            $transform->setServices($this->factory, $this, $this->urlGenerator);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function registerResourceDefinition(
         $routeName,
         CompiledResourceDefinitionInterface $resourceDefinition)
@@ -84,7 +111,7 @@ class CompilerCache implements CompilerCacheInterface
      */
     public function serialize()
     {
-        return CompilerHelper::serialize(get_object_vars($this), ['authorizationChecker']);
+        return CompilerHelper::serialize(get_object_vars($this), ['authorizationChecker', 'factory', 'urlGenerator']);
     }
 
     /**
@@ -93,5 +120,11 @@ class CompilerCache implements CompilerCacheInterface
     public function setAuthorizationChecker(AuthorizationCheckerInterface $authorizationChecker)
     {
         $this->authorizationChecker = $authorizationChecker;
+    }
+
+    public function setServices(FactoryInterface $factory, UrlGeneratorInterface $urlGenerator)
+    {
+        $this->factory = $factory;
+        $this->urlGenerator = $urlGenerator;
     }
 }

@@ -29,6 +29,11 @@ interface CompilerCacheInterface
     public function findResourceDefinitionForModelClass($modelClass);
 
     /**
+     * @return void
+     */
+    public function hydrate($data);
+
+    /**
      * @param string $routeName The route name to cache the definition under.
      * @param \Rested\Definition\Compiled\CompiledResourceDefinitionInterface $resourceDefinition The resource definition to cache.
      * @return void

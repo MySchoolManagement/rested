@@ -1,17 +1,14 @@
 <?php
 namespace Rested\Transforms;
 
-use Psy\Context;
 use Rested\Compiler\CompilerCacheInterface;
 use Rested\Compiler\CompilerHelper;
 use Rested\Definition\ActionDefinition;
-use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\Definition\Embed;
 use Rested\Definition\Field;
 use Rested\Definition\GetterField;
 use Rested\Definition\Parameter;
-use Rested\Definition\ResourceDefinitionInterface;
 use Rested\Definition\SetterField;
 use Rested\FactoryInterface;
 use Rested\Http\ContextInterface;
@@ -21,6 +18,13 @@ use Rested\UrlGeneratorInterface;
 
 class DefaultTransform implements TransformInterface, \Serializable
 {
+
+    /**
+     * List of transforms to hydrate, this is when loading a set of transforms from the cache.
+     *
+     * @var DefaultTransform[]
+     */
+    static $hydrate = [];
 
     /**
      * @var \Rested\Compiler\CompilerCacheInterface
@@ -36,13 +40,6 @@ class DefaultTransform implements TransformInterface, \Serializable
      * @var \Rested\UrlGeneratorInterface
      */
     protected $urlGenerator;
-
-    public function __construct(FactoryInterface $factory, CompilerCacheInterface $compilerCache, UrlGeneratorInterface $urlGenerator)
-    {
-        $this->compilerCache = $compilerCache;
-        $this->factory = $factory;
-        $this->urlGenerator = $urlGenerator;
-    }
 
     /**
      * {@inheritdoc}
@@ -273,5 +270,19 @@ class DefaultTransform implements TransformInterface, \Serializable
         foreach (unserialize($data) as $k => $v) {
             $this->{$k} = $v;
         }
+
+        static::$hydrate[] = $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setServices(FactoryInterface $factory, CompilerCacheInterface $compilerCache, UrlGeneratorInterface $urlGenerator)
+    {
+        $this->compilerCache = $compilerCache;
+        $this->factory = $factory;
+        $this->urlGenerator = $urlGenerator;
+
+        return $this;
     }
 }

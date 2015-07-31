@@ -3,6 +3,7 @@ namespace Rested\Transforms;
 
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\Definition\Field;
+use Rested\FactoryInterface;
 use Rested\Http\ContextInterface;
 
 interface TransformInterface
