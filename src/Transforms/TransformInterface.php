@@ -16,8 +16,6 @@ interface TransformInterface
 
     public function exportAll(ContextInterface $context = null, CompiledTransformMappingInterface $transformMapping, $instance);
 
-    public function makeUrlForInstance(CompiledResourceDefinitionInterface $resourceDefinition, $instance);
-
     public function retrieveIdFrominstance(CompiledTransformMappingInterface $transformMapping, $instance);
 
     public function validate(CompiledTransformMappingInterface $transformMapping, array $input);

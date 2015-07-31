@@ -3,6 +3,7 @@ namespace Rested\Transforms;
 
 use Psy\Context;
 use Rested\Compiler\CompilerCacheInterface;
+use Rested\Compiler\CompilerHelper;
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Compiled\CompiledActionDefinitionInterface;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
@@ -18,7 +19,7 @@ use Rested\Http\EmbedContext;
 use Rested\Http\InstanceResponse;
 use Rested\UrlGeneratorInterface;
 
-class DefaultTransform implements TransformInterface
+class DefaultTransform implements TransformInterface, \Serializable
 {
 
     /**
@@ -226,10 +227,7 @@ class DefaultTransform implements TransformInterface
         return $instance->{$callable}();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function makeUrlForInstance(CompiledResourceDefinitionInterface $resourceDefinition, $instance)
+    protected function makeUrlForInstance(CompiledResourceDefinitionInterface $resourceDefinition, $instance)
     {
         $action = $resourceDefinition->findFirstAction(ActionDefinition::TYPE_INSTANCE);
 
@@ -263,5 +261,17 @@ class DefaultTransform implements TransformInterface
     public function validate(CompiledTransformMappingInterface $transformMapping, array $input)
     {
         return true;
+    }
+
+    public function serialize()
+    {
+        return CompilerHelper::serialize(get_object_vars($this), ['compilerCache', 'factory', 'urlGenerator']);
+    }
+
+    public function unserialize($data)
+    {
+        foreach (unserialize($data) as $k => $v) {
+            $this->{$k} = $v;
+        }
     }
 }

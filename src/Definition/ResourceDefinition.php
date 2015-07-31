@@ -1,13 +1,14 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Compiler\CompilerHelper;
 use Rested\Exceptions\ActionExistsException;
 use Rested\FactoryInterface;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
 
-class ResourceDefinition implements ResourceDefinitionInterface
+class ResourceDefinition implements ResourceDefinitionInterface, \Serializable
 {
 
     /**
@@ -269,5 +270,17 @@ class ResourceDefinition implements ResourceDefinitionInterface
         $this->summary = $value;
 
         return $this;
+    }
+
+    public function serialize()
+    {
+        return CompilerHelper::serialize(get_object_vars($this), ['factory']);
+    }
+
+    public function unserialize($data)
+    {
+        foreach (unserialize($data) as $k => $v) {
+            $this->{$k} = $v;
+        }
     }
 }

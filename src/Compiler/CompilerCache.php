@@ -15,12 +15,12 @@ class CompilerCache implements CompilerCacheInterface
     /**
      * @var CompiledResourceDefinitionInterface[]
      */
-    protected $resourceDefinitions = [];
+    public $resourceDefinitions = [];
 
     /**
      * @var CompiledResourceDefinitionInterface[]
      */
-    protected $resourceDefinitionsByModel = [];
+    public $resourceDefinitionsByModel = [];
 
     /**
      * @param \Rested\Definition\Compiled\CompiledResourceDefinitionInterface|null $resourceDefinition
@@ -77,6 +77,14 @@ class CompilerCache implements CompilerCacheInterface
         foreach ($resourceDefinition->getActions() as $action) {
             $this->resourceDefinitionsByModel[$action->getTransformMapping()->getModelClass()] = $resourceDefinition;
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function serialize()
+    {
+        return CompilerHelper::serialize(get_object_vars($this), ['authorizationChecker']);
     }
 
     /**

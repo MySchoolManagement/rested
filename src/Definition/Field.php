@@ -24,7 +24,7 @@ abstract class Field
     /**
      * @var string
      */
-    protected $name;
+    public $name;
 
     /**
      * @var string

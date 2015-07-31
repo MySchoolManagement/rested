@@ -1,11 +1,12 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\Compiler\CompilerHelper;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
 use Symfony\Component\HttpFoundation\Request as Request;
 
-class ActionDefinition implements ActionDefinitionInterface
+class ActionDefinition implements ActionDefinitionInterface, \Serializable
 {
 
     const SECURITY_ATTRIBUTE = 'rested_action';
@@ -356,5 +357,17 @@ class ActionDefinition implements ActionDefinitionInterface
         }
 
         return Request::METHOD_GET;
+    }
+
+    public function serialize()
+    {
+        return CompilerHelper::serialize(get_object_vars($this));
+    }
+
+    public function unserialize($data)
+    {
+        foreach (unserialize($data) as $k => $v) {
+            $this->{$k} = $v;
+        }
     }
 }

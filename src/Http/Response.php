@@ -75,7 +75,7 @@ abstract class Response extends Hal
         $action = $this->restedService->findActionByRouteName($routeName);
 
         if ($action !== null) {
-            $this->addLink($rel, $action->getEndpointUrl());
+            $this->addLink($rel, $this->urlGenerator->route($routeName));
             $this->addFiltersToLink($rel, $action);
         }
     }
@@ -107,8 +107,7 @@ abstract class Response extends Hal
         CompiledResourceDefinitionInterface $resourceDefinition,
         CompiledActionDefinitionInterface $action,
         $instance = null)
-    {;
-        $url = $action->getEndpointUrl();
+    {
         $fields = [];
         $links = [];
         $operation = ($action->getHttpMethod() === Request::METHOD_GET) ? GetterField::OPERATION : SetterField::OPERATION;
@@ -124,12 +123,9 @@ abstract class Response extends Hal
         }
 
         if ($action->getType() !== ActionDefinition::TYPE_CREATE) {
-            $url = $transform->makeUrlForInstance($resourceDefinition, $instance);
-
-            // FIXME: we should not be making urls
-            if ($action->shouldAppendId() === true) {
-                $url .= '/' . $action->getId();
-            }
+            $url = $this->urlGenerator->route($action->getRoles(), [
+                'id' => $transform->retrieveIdFromInstance($transformMapping, $instance),
+            ]);
         }
 
         $this->data['_actions'][] = [

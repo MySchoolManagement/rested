@@ -39,6 +39,13 @@ interface CompilerCacheInterface
     );
 
     /**
+     * Serializes the definitions for caching.
+     *
+     * @return mixed
+     */
+    public function serialize();
+
+    /**
      * Sets the authorization checker for applying access controls to resource definitions.
      *
      * @param \Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface $authorizationChecker

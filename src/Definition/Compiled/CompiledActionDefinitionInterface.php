@@ -16,11 +16,9 @@ interface CompiledActionDefinitionInterface extends ActionDefinitionInterface
     /**
      * Gets the generated Url for this action.
      *
-     * @param bool $absolute Should the Url be absolute?
-     *
      * @return string
      */
-    public function getEndpointUrl($absolute = true);
+    public function getEndpointUrl();
 
     /**
      * Gets the roles for this action.

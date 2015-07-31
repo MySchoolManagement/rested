@@ -2,12 +2,13 @@
 namespace Rested\Transforms;
 
 use Ramsey\Uuid\Uuid;
+use Rested\Compiler\CompilerHelper;
 use Rested\Definition\Embed;
 use Rested\Definition\Filter;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
 
-class DefaultTransformMapping implements TransformMappingInterface
+class DefaultTransformMapping implements TransformMappingInterface, \Serializable
 {
 
     /**
@@ -217,5 +218,17 @@ class DefaultTransformMapping implements TransformMappingInterface
         $this->fieldFilterCallback = $callback;
 
         return $this;
+    }
+
+    public function serialize()
+    {
+        return CompilerHelper::serialize(get_object_vars($this));
+    }
+
+    public function unserialize($data)
+    {
+        foreach (unserialize($data) as $k => $v) {
+            $this->{$k} = $v;
+        }
     }
 }

@@ -95,8 +95,7 @@ class Compiler implements CompilerInterface
         return new CompiledActionDefinition(
             $this->nameGenerator->routeName($actionDefinition, $path),
             $this->nameGenerator->rolesForAction($actionDefinition, $path),
-            $this->generateUrlForAction($actionDefinition, $path, true),
-            $this->generateUrlForAction($actionDefinition, $path, false),
+            $this->generateUrlForAction($actionDefinition, $path),
             $actionDefinition->getType(),
             $actionDefinition->getId(),
             $actionDefinition->shouldAppendId(),
@@ -243,11 +242,10 @@ class Compiler implements CompilerInterface
      *
      * @param string $path The path for the resource the action belongs to.
      * @param \Rested\Definition\ActionDefinitionInterface $action Action to generate a Url for.
-     * @param bool $absolute Should the Url be absolute?
      *
      * @return string
      */
-    protected function generateUrlForAction(ActionDefinitionInterface $action, $path, $absolute = true)
+    protected function generateUrlForAction(ActionDefinitionInterface $action, $path)
     {
         $tokens = $action->getTokens();
         $components = array_map(function(Parameter $value) {
@@ -264,6 +262,6 @@ class Compiler implements CompilerInterface
         $u = join('/', $components);
         $u = preg_replace('/\/{2,}/', '/', $u);
 
-        return $this->urlGenerator->url($u, $absolute);
+        return $u;
     }
 }

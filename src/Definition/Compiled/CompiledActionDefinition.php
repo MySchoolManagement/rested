@@ -11,11 +11,6 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
 {
 
     /**
-     * @var string
-     */
-    protected $absoluteEndpointUrl;
-
-    /**
      * @var bool
      */
     protected $accessControlApplied = false;
@@ -23,7 +18,7 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
     /**
      * @var string
      */
-    protected $relativeEndpointUrl;
+    protected $endpointUrl;
 
     /**
      * @var \Symfony\Component\Security\Core\Role\RoleInterface
@@ -35,16 +30,15 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
      */
     protected $routeName;
 
-    public function __construct($routeName, array $roles, $absoluteEndpointUrl, $relativeEndpointUrl, $type, $id, $shouldAppendId, $summary, $description, $controllerName, $httpMethod, $acceptedContentType, $affordanceAvailabilityCallback, array $tokens, TransformInterface $transform, TransformMappingInterface $transformMapping)
+    public function __construct($routeName, array $roles, $endpointUrl, $type, $id, $shouldAppendId, $summary, $description, $controllerName, $httpMethod, $acceptedContentType, $affordanceAvailabilityCallback, array $tokens, TransformInterface $transform, TransformMappingInterface $transformMapping)
     {
-        $this->absoluteEndpointUrl = $absoluteEndpointUrl;
         $this->acceptedContentType = $acceptedContentType;
         $this->affordanceAvailabilityCallback = $affordanceAvailabilityCallback;
         $this->controllerName = $controllerName;
         $this->description = $description;
+        $this->endpointUrl = $endpointUrl;
         $this->id = $id;
         $this->httpMethod = $httpMethod;
-        $this->relativeEndpointUrl = $relativeEndpointUrl;
         $this->roles = $roles;
         $this->routeName = $routeName;
         $this->shouldAppendId = $shouldAppendId;
@@ -69,9 +63,9 @@ class CompiledActionDefinition extends ActionDefinition implements CompiledActio
     /**
      * {@inheritdoc}
      */
-    public function getEndpointUrl($absolute = true)
+    public function getEndpointUrl()
     {
-        return $absolute ? $this->absoluteEndpointUrl : $this->relativeEndpointUrl;
+        return $this->endpointUrl;
     }
 
     /**

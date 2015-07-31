@@ -20,13 +20,4 @@ interface UrlGeneratorInterface
      * @return string
      */
     public function route($routeName, array $parameters = [], $absolute = true);
-
-    /**
-     * Generates a Url for a given path.
-     *
-     * @param string $path Path to append to the end of the generated Url.
-     * @param true|bool $absolute Should the generated Url be absolute?
-     * @return string
-     */
-    public function url($path, $absolute = true);
 }
