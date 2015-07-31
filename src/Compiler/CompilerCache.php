@@ -81,6 +81,14 @@ class CompilerCache implements CompilerCacheInterface
     /**
      * {@inheritdoc}
      */
+    public function getResourceDefinitions()
+    {
+        return array_values($this->resourceDefinitions);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function hydrate($data)
     {
         $data = unserialize($data);

@@ -106,6 +106,13 @@ interface ResourceDefinitionInterface
     public function getActions();
 
     /**
+     * Gets the class the controller is defined in.
+     *
+     * @return string
+     */
+    public function getControllerClass();
+
+    /**
      * Classname of the data model backing the resource.
      *
      * @return string

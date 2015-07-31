@@ -55,11 +55,13 @@ class ResourceDefinition implements ResourceDefinitionInterface, \Serializable
      * Constructs a new ResourceDefinition.
      *
      * @param string $name Friendly name for the resource. In the absence of a path, this is converted and used.
+     * @param string $controllerClass Class which with the resource is defined in.
      * @param \Rested\Transforms\Transforminterface $defaultTansform The default transform that is assigned ot actions.
      * @param \Rested\Transforms\TransformMappingInterface $defaultTransformMapping The default model that is assigned to actions.
      */
-    public function __construct(FactoryInterface $factory, $name, TransformInterface $defaultTansform, TransformMappingInterface $defaultTransformMapping)
+    public function __construct(FactoryInterface $factory, $name, $controllerClass, TransformInterface $defaultTansform, TransformMappingInterface $defaultTransformMapping)
     {
+        $this->controllerClass = $controllerClass;
         $this->defaultTransform = $defaultTansform;
         $this->defaultTransformMapping = $defaultTransformMapping;
         $this->factory = $factory;
@@ -184,6 +186,14 @@ class ResourceDefinition implements ResourceDefinitionInterface, \Serializable
     public function getActions()
     {
         return $this->actions;
+    }
+
+    /**
+     * @return string
+     */
+    public function getControllerClass()
+    {
+        return $this->controllerClass;
     }
 
     /**

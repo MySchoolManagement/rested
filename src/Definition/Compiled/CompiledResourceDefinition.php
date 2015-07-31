@@ -18,12 +18,13 @@ class CompiledResourceDefinition extends ResourceDefinition implements CompiledR
 
     public function __construct(
         FactoryInterface $factory,
-        $path, $name, $summary, $description,
+        $path, $name, $controllerClass, $summary, $description,
         array $actions = [],
         TransformInterface $defaultTransform,
         CompiledTransformMappingInterface $defaultTransformMapping)
     {
         $this->actions = $actions;
+        $this->controllerClass = $controllerClass;
         $this->defaultTransform = $defaultTransform;
         $this->defaultTransformMapping = $defaultTransformMapping;
         $this->description = $description;

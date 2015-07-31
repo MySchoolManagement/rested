@@ -29,6 +29,11 @@ interface CompilerCacheInterface
     public function findResourceDefinitionForModelClass($modelClass);
 
     /**
+     * @return \Rested\Definition\Compiled\CompiledResourceDefinitionInterface[];
+     */
+    public function getResourceDefinitions();
+
+    /**
      * @return void
      */
     public function hydrate($data);

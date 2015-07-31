@@ -79,6 +79,7 @@ class Compiler implements CompilerInterface
             $this->factory,
             $resourceDefinition->getPath(),
             $resourceDefinition->getName(),
+            $resourceDefinition->getControllerClass(),
             $resourceDefinition->getSummary(),
             $resourceDefinition->getDescription(),
             $actions,

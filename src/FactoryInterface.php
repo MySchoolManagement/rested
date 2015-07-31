@@ -27,7 +27,7 @@ interface FactoryInterface
     /**
      * @return \Rested\Definition\ResourceDefinitionInterface
      */
-    public function createResourceDefinition($name, $modelClass);
+    public function createResourceDefinition($name, $controllerClass, $modelClass);
 
     /**
      * @return \Rested\Transforms\TransformMappingInterface
