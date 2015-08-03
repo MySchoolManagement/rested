@@ -124,8 +124,9 @@ abstract class Response extends Hal
         }
 
         if ($action->getType() !== ActionDefinition::TYPE_CREATE) {
+            $instanceAction = $resourceDefinition->findFirstAction(ActionDefinition::TYPE_INSTANCE);
             $url = $this->urlGenerator->route($action->getRouteName(), [
-                'id' => $transform->retrieveIdFromInstance($transformMapping, $instance),
+                'id' => $transform->retrieveIdFromInstance($instanceAction->getTransformMapping(), $instance),
             ]);
         }
 
