@@ -113,6 +113,7 @@ abstract class Response extends Hal
         $operation = ($action->getHttpMethod() === Request::METHOD_GET) ? GetterField::OPERATION : SetterField::OPERATION;
         $transform = $action->getTransform();
         $transformMapping = $action->getTransformMapping();
+        $url = $this->urlGenerator->route($action->getRouteName());
 
         // FIXME: refactor so that this runs when the action is compiled
         $modelFields = $transformMapping->executeFieldFilterCallback($operation, $instance);
@@ -123,7 +124,7 @@ abstract class Response extends Hal
         }
 
         if ($action->getType() !== ActionDefinition::TYPE_CREATE) {
-            $url = $this->urlGenerator->route($action->getRoles(), [
+            $url = $this->urlGenerator->route($action->getRouteName(), [
                 'id' => $transform->retrieveIdFromInstance($transformMapping, $instance),
             ]);
         }
