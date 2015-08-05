@@ -257,7 +257,7 @@ class DefaultTransform implements TransformInterface, \Serializable
      */
     public function validate(CompiledTransformMappingInterface $transformMapping, array $input)
     {
-        return true;
+        return [];
     }
 
     public function serialize()

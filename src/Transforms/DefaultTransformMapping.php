@@ -220,6 +220,16 @@ class DefaultTransformMapping implements TransformMappingInterface, \Serializabl
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function setPrimaryKeyFieldName($name)
+    {
+        $this->primaryKeyFieldName = $name;
+
+        return $this;
+    }
+
     public function serialize()
     {
         return CompilerHelper::serialize(get_object_vars($this));

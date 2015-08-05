@@ -2,6 +2,7 @@
 namespace Rested\Http;
 
 use Rested\Definition\Parameter;
+use Rested\Helper;
 
 class RequestParser
 {
@@ -110,7 +111,7 @@ class RequestParser
                     $app->abort(400, sprintf('Bad value for \'%s\', expected \'%s\'.', $name, $dataType));
                 }
 
-                $this->parameters[$name] = $this->processValue($query[$name]);
+                $this->parameters[$name] = Helper::processValue($query[$name], $parameter->getDataType());
             }
         }
 
@@ -121,28 +122,4 @@ class RequestParser
         $this->convertDottedNotation($this->parameters['embed']);
         $this->convertDottedNotation($this->parameters['fields']);
     }
-
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    protected function processValue($value)
-    {
-        if (is_array($value) === true) {
-            foreach ($value as $k => $v) {
-                $value[$k] = $this->processValue($v);
-            }
-        } else
-            if (is_string($value) == true) {
-                if ($value === 'true') {
-                    return true;
-                } else {
-                    if ($value === 'false') {
-                        return false;
-                    }
-                }
-            }
-        return $value;
-    }
 }
-

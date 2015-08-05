@@ -83,4 +83,9 @@ interface TransformMappingInterface
      * @return $this
      */
     public function setFieldFilterCallback($callback);
+
+    /**
+     * @return $this
+     */
+    public function setPrimaryKeyFieldName($name);
 }

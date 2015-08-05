@@ -2,6 +2,7 @@
 namespace Rested;
 
 use Nocarrier\Hal;
+use Rested\Definition\SetterField;
 use Symfony\Component\HttpFoundation\Request as HttpRequest;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -53,18 +54,31 @@ trait Resource
             $input = $request->request->all();
         }
 
-        // set empty strings to null
-        return array_map(function($x) {
-            if (is_string($x) === true) {
-                $x = preg_replace('/(^\s+)|(\s+$)/us', '', $x);
+        $transformMapping = $this->getCurrentAction()->getTransformMapping();
+        $out = [];
 
-                if (mb_strlen($x) === 0) {
-                    return null;
+        // process values, set empty strings to null and convert data types
+        foreach ($input as $k => $v ) {
+            $field = $transformMapping->findField($k, SetterField::OPERATION);
+
+            if ($field !== null) {
+                if (is_string($v) === true) {
+                    $v = preg_replace('/(^\s+)|(\s+$)/us', '', $x);
+
+                    if (mb_strlen($x) === 0) {
+                        $v = null;
+                    }
                 }
-            }
 
-            return $x;
-        }, $input);
+                if ($v !== null) {
+                    $v = Helper::processValue($v, $field->getDataType());
+                }
+
+                $out[$k] = $v;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -88,7 +102,7 @@ trait Resource
         ;
     }
 
-    public function handle()
+    public function handle($id)
     {
         $request = $this->getCurrentRequest();
         $controller = $request->get('_rested')['controller'];

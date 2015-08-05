@@ -1,10 +1,43 @@
 <?php
 namespace Rested;
 
-use Symfony\Component\Security\Core\Role\Role;
+use Rested\Definition\Parameter;
 
 class Helper
 {
+
+    /**
+     * @return mixed
+     */
+    public static function processValue($value, $dataType)
+    {
+        if (is_array($value) === true) {
+            foreach ($value as $k => $v) {
+                $value[$k] = static::processValue($v, $dataType);
+            }
+        } else {
+            switch ($dataType) {
+                case Parameter::TYPE_BOOL:
+                    if (($value === 'true') || ($value === '1')) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                    break;
+
+                case Parameter::TYPE_DATE:
+                    return \DateTime::createFromFormat('Y-m-d', $value);
+
+                case Parameter::TYPE_DATETIME:
+                    return \DateTime::createFromFormat(\Datetime::ISO8601, $value);
+
+                case Parameter::TYPE_INT:
+                    return (int)$value;
+            }
+        }
+
+        return $value;
+    }
 
     public static function convertArrayValuesTo(array &$arr, $type)
     {
