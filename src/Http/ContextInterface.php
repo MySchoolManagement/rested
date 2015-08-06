@@ -64,4 +64,9 @@ interface ContextInterface
      * @return bool
      */
     public function wantsField($name);
+
+    /**
+     * @return bool
+     */
+    public function wantsMetadata();
 }

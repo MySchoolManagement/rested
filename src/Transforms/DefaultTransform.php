@@ -139,7 +139,7 @@ class DefaultTransform implements TransformInterface, \Serializable
                             $items[] = $export;
                         }
 
-                        return $this->factory->createCollectionResponse($embedResourceDefinition, null, $items);
+                        return $this->factory->createCollectionResponse($embedResourceDefinition, $context, null, $items);
                     } else {
                         return $embedTransform->export($embedContext, $embedTransformMapping, $value);
                     }
@@ -178,7 +178,7 @@ class DefaultTransform implements TransformInterface, \Serializable
             }
         }
 
-        $response = $this->factory->createInstanceResponse($resourceDefinition, $href, $item, $instance);
+        $response = $this->factory->createInstanceResponse($resourceDefinition, $context, $href, $item, $instance);
         $this->exportEmbeds($transformMapping, $context, $response, $instance);
 
         return $response;

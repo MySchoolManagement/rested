@@ -17,6 +17,7 @@ class RequestParser
         'fields' => '',
         'filters' => [],
         'limit' => self::DEFAULT_LIMIT,
+        'metadata' => true,
         'offset' => self::DEFAULT_OFFSET,
     ];
 
@@ -68,6 +69,7 @@ class RequestParser
             new Parameter('fields', Parameter::TYPE_STRING, '', 'List of fields to provide for each item.'),
             new Parameter('filters', Parameter::TYPE_ARRAY, [], 'List of filters to apply.'),
             new Parameter('limit', Parameter::TYPE_INT, self::DEFAULT_LIMIT, 'How many items are to be fetched?'),
+            new Parameter('metadata', Parameter::TYPE_BOOL, true, 'Should meta data be returned?'),
             new Parameter('offset', Parameter::TYPE_INT, self::DEFAULT_OFFSET, 'At what offset should we start fetching items?')
         ];
     }

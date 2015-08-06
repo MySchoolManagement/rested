@@ -20,6 +20,7 @@ class EmbedContext extends Context
             'fields' => array_key_exists($name, $parentFields) ? $parentFields[$name] : [],
             'filters' => array_key_exists($name, $parentFilters) ? $parentFilters[$name] : [],
             'limit' => RequestParser::DEFAULT_LIMIT,
+            'metadata' => true,
             'offset' => RequestParser::DEFAULT_OFFSET,
         ];
 

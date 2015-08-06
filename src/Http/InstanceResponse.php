@@ -3,7 +3,6 @@ namespace Rested\Http;
 
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
-use Rested\FactoryInterface;
 use Rested\RestedResourceInterface;
 use Rested\RestedServiceInterface;
 use Rested\UrlGeneratorInterface;
@@ -15,14 +14,13 @@ class InstanceResponse extends Response
         RestedServiceInterface $restedService,
         UrlGeneratorInterface $urlGenerator,
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ContextInterface $context,
         $href,
         array $data,
         $instance = null
     )
     {
-        // FIXME: remove the need to pass in an instance of the object to create actions from
-
-        parent::__construct($restedService, $urlGenerator, $href, $data);
+        parent::__construct($restedService, $urlGenerator, $context, $href, $data);
 
         $this->addActions($resourceDefinition, [
             ActionDefinition::TYPE_DELETE,

@@ -10,8 +10,6 @@ use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\Definition\Field;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
-use Rested\FactoryInterface;
-use Rested\Helper;
 use Rested\RestedResourceInterface;
 use Rested\RestedServiceInterface;
 use Rested\Security\AccessVoter;
@@ -20,6 +18,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 abstract class Response extends Hal
 {
+
+    /**
+     * @var \Rested\Http\ContextInterface
+     */
+    protected $context;
 
     /**
      * @var \Rested\RestedServiceInterface
@@ -34,19 +37,29 @@ abstract class Response extends Hal
     public function __construct(
         RestedServiceInterface $restedService,
         UrlGeneratorInterface $urlGenerator,
+        ContextInterface $context,
         $uri = null,
         array $data = [])
     {
         parent::__construct($uri, $data);
 
+        $this->context = $context;
         $this->restedService = $restedService;
         $this->urlGenerator = $urlGenerator;
+
+        if ($context->wantsMetadata() === false) {
+            $uri = null;
+        }
 
         $this->addLink('self', $uri);
     }
 
     protected function addActions(CompiledResourceDefinitionInterface $resourceDefinition, array $which, $instance = null)
     {
+        if ($this->context->wantsMetadata() === false) {
+            return;
+        }
+
         $actions = $resourceDefinition->getActions();
         $links = [];
 

@@ -2,6 +2,7 @@
 namespace Rested;
 
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
+use Rested\Http\ContextInterface;
 
 interface FactoryInterface
 {
@@ -11,6 +12,7 @@ interface FactoryInterface
      */
     public function createCollectionResponse(
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ContextInterface $context,
         $href,
         array $items = [],
         $total = null);
@@ -44,6 +46,7 @@ interface FactoryInterface
      */
     public function createInstanceResponse(
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ContextInterface $context,
         $href,
         array $data,
         $instance = null);

@@ -15,13 +15,14 @@ class CollectionResponse extends Response
         RestedServiceInterface $restedService,
         UrlGeneratorInterface $urlGenerator,
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ContextInterface $context,
         $href,
         array $items,
         $total)
     {
         $count = sizeof($items);
 
-        parent::__construct($restedService, $urlGenerator, $href, [
+        parent::__construct($restedService, $urlGenerator, $context, $href, [
             'count' => $count,
             'total' => ($total !== null) ? $total : $count,
         ]);

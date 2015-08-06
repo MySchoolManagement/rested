@@ -29,6 +29,7 @@ class Context implements ContextInterface
         'fields' => [],
         'filters' => [],
         'limit' => RequestParser::DEFAULT_LIMIT,
+        'metadata' => true,
         'offset' => RequestParser::DEFAULT_OFFSET,
     ];
 
@@ -154,5 +155,13 @@ class Context implements ContextInterface
         }
 
         return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function wantsMetadata()
+    {
+        return $this->parameters['metadata'];
     }
 }
