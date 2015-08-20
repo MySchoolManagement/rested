@@ -11,6 +11,7 @@ use Rested\Definition\GetterField;
 use Rested\Definition\Parameter;
 use Rested\Definition\SetterField;
 use Rested\FactoryInterface;
+use Rested\Helper;
 use Rested\Http\ContextInterface;
 use Rested\Http\EmbedContext;
 use Rested\Http\InstanceResponse;
@@ -201,8 +202,13 @@ class DefaultTransform implements TransformInterface, \Serializable
                 $return = $value->format(\DateTime::ISO8601);
             }
         } else if (is_object($value) === true) {
-            throw new \Exception('NOT IMPLEMENTED');
-            //$return = $value->export($context);
+            $ret = [];
+
+            foreach ($value as $k => $v) {
+                $ret[Helper::toUnderscore($k)] = $v;
+            }
+
+            return $ret;
         } else {
             $return = $value;
         }
@@ -216,6 +222,12 @@ class DefaultTransform implements TransformInterface, \Serializable
         Embed $embed,
         $instance)
     {
+        $userData = $embed->getUserData();
+
+        if (array_key_exists('method', $userData) === true) {
+            return $instance->{$userData['method']}();
+        }
+
         return null;
     }
 

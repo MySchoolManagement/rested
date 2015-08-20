@@ -1,8 +1,6 @@
 <?php
 namespace Rested;
 
-use Symfony\Component\Security\Core\Role\Role;
-
 class Helper
 {
 
@@ -28,5 +26,10 @@ class Helper
         }
 
         return $messages;
+    }
+
+    public static function toUnderscore($name)
+    {
+        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $name));
     }
 }
