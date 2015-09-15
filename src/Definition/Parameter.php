@@ -10,6 +10,7 @@ class Parameter
     const TYPE_BOOL = 'bool';
     const TYPE_DATE = 'date';
     const TYPE_DATETIME = 'datetime';
+    const TYPE_FLOAT = 'float';
     const TYPE_INT = 'int';
     const TYPE_SLASH = 'slash';
     const TYPE_STRING = 'string';
@@ -120,6 +121,9 @@ class Parameter
             case self::TYPE_DATETIME:
                 return sprintf('date_format:%s', \DateTime::ISO8601);
 
+            case self::TYPE_FLOAT:
+                return 'numeric';
+
             case self::TYPE_INT:
                 return 'numeric';
 
@@ -150,6 +154,9 @@ class Parameter
 
             case self::TYPE_DATETIME:
                 return sprintf('date_format:%s'. \DateTime::ISO8601);
+
+            case self::TYPE_FLOAT:
+                return '[-+]?(\d*[.])?\d+';
 
             case self::TYPE_INT:
                 return '\d+';
