@@ -80,6 +80,12 @@ interface TransformMappingInterface
     public function getPrimaryKeyFieldName();
 
     /**
+     * @param $name
+     * @return $this
+     */
+    public function setPrimaryKeyFieldName($name);
+
+    /**
      * @return $this
      */
     public function setFieldFilterCallback($callback);

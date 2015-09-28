@@ -213,6 +213,16 @@ class DefaultTransformMapping implements TransformMappingInterface, \Serializabl
     /**
      * {@inheritdoc}
      */
+    public function setPrimaryKeyFieldName($name)
+    {
+        $this->primaryKeyFieldName = $name;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setFieldFilterCallback($callback)
     {
         $this->fieldFilterCallback = $callback;
