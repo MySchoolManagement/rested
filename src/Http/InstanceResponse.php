@@ -3,7 +3,7 @@ namespace Rested\Http;
 
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
-use Rested\RestedResourceInterface;
+use Rested\ResourceInterface;
 use Rested\RestedServiceInterface;
 use Rested\UrlGeneratorInterface;
 
@@ -14,13 +14,14 @@ class InstanceResponse extends Response
         RestedServiceInterface $restedService,
         UrlGeneratorInterface $urlGenerator,
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ResourceInterface $resource,
         ContextInterface $context,
         $href,
         array $data,
         $instance = null
     )
     {
-        parent::__construct($restedService, $urlGenerator, $context, $href, $data);
+        parent::__construct($restedService, $urlGenerator, $resource, $context, $href, $data);
 
         $this->addActions($resourceDefinition, [
             ActionDefinition::TYPE_DELETE,

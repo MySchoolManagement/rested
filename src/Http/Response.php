@@ -10,6 +10,7 @@ use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
 use Rested\Definition\Field;
 use Rested\Definition\GetterField;
 use Rested\Definition\SetterField;
+use Rested\ResourceInterface;
 use Rested\RestedResourceInterface;
 use Rested\RestedServiceInterface;
 use Rested\Security\AccessVoter;
@@ -25,6 +26,11 @@ abstract class Response extends Hal
     protected $context;
 
     /**
+     * @var \Rested\ResourceInterface
+     */
+    protected $resource;
+
+    /**
      * @var \Rested\RestedServiceInterface
      */
     protected $restedService;
@@ -37,6 +43,7 @@ abstract class Response extends Hal
     public function __construct(
         RestedServiceInterface $restedService,
         UrlGeneratorInterface $urlGenerator,
+        ResourceInterface $resource,
         ContextInterface $context,
         $uri = null,
         array $data = [])
@@ -44,6 +51,7 @@ abstract class Response extends Hal
         parent::__construct($uri, $data);
 
         $this->context = $context;
+        $this->resource = $resource;
         $this->restedService = $restedService;
         $this->urlGenerator = $urlGenerator;
 
@@ -52,6 +60,14 @@ abstract class Response extends Hal
         }
 
         $this->addLink('self', $uri);
+    }
+
+    /**
+     * @return \Rested\ResourceInterface
+     */
+    public function getResource()
+    {
+        return $this->resource;
     }
 
     protected function addActions(CompiledResourceDefinitionInterface $resourceDefinition, array $which, $instance = null)
@@ -71,7 +87,7 @@ abstract class Response extends Hal
             }
 
             if ((in_array($action->getType(), $which) === false)
-                || ($action->isAffordanceAvailable($instance) === false)) {
+                || ($action->isAffordanceAvailable($this->resource, $instance) === false)) {
                 continue;
             }
 

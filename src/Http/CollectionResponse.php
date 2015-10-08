@@ -3,8 +3,7 @@ namespace Rested\Http;
 
 use Rested\Definition\ActionDefinition;
 use Rested\Definition\Compiled\CompiledResourceDefinitionInterface;
-use Rested\FactoryInterface;
-use Rested\RestedResourceInterface;
+use Rested\ResourceInterface;
 use Rested\RestedServiceInterface;
 use Rested\UrlGeneratorInterface;
 
@@ -15,6 +14,7 @@ class CollectionResponse extends Response
         RestedServiceInterface $restedService,
         UrlGeneratorInterface $urlGenerator,
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ResourceInterface $resource,
         ContextInterface $context,
         $href,
         array $items,
@@ -22,7 +22,7 @@ class CollectionResponse extends Response
     {
         $count = sizeof($items);
 
-        parent::__construct($restedService, $urlGenerator, $context, $href, [
+        parent::__construct($restedService, $urlGenerator, $resource, $context, $href, [
             'count' => $count,
             'total' => ($total !== null) ? $total : $count,
         ]);

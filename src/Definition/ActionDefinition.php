@@ -2,6 +2,7 @@
 namespace Rested\Definition;
 
 use Rested\Compiler\CompilerHelper;
+use Rested\ResourceInterface;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
 use Symfony\Component\HttpFoundation\Request as Request;
@@ -236,13 +237,13 @@ class ActionDefinition implements ActionDefinitionInterface, \Serializable
     /**
      * {@inheritdoc}
      */
-    public function isAffordanceAvailable($instance = null)
+    public function isAffordanceAvailable(ResourceInterface $resource, $instance = null)
     {
         if ($this->affordanceAvailabilityCallback === null) {
             return true;
         }
 
-        return call_user_func_array($this->affordanceAvailabilityCallback, [$instance]);
+        return call_user_func_array($this->affordanceAvailabilityCallback, [$resource, $instance]);
     }
 
     /**

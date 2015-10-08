@@ -12,6 +12,7 @@ interface FactoryInterface
      */
     public function createCollectionResponse(
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ResourceInterface $resource,
         ContextInterface $context,
         $href,
         array $items = [],
@@ -46,6 +47,7 @@ interface FactoryInterface
      */
     public function createInstanceResponse(
         CompiledResourceDefinitionInterface $resourceDefinition,
+        ResourceInterface $resource,
         ContextInterface $context,
         $href,
         array $data,

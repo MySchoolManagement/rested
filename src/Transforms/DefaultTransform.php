@@ -15,6 +15,7 @@ use Rested\Helper;
 use Rested\Http\ContextInterface;
 use Rested\Http\EmbedContext;
 use Rested\Http\InstanceResponse;
+use Rested\ResourceInterface;
 use Rested\UrlGeneratorInterface;
 
 class DefaultTransform implements TransformInterface, \Serializable
@@ -78,17 +79,17 @@ class DefaultTransform implements TransformInterface, \Serializable
     /**
      * {@inheritdoc}
      */
-    public function export(ContextInterface $context, CompiledTransformMappingInterface $transformMapping, $instance)
+    public function export(ContextInterface $context, ResourceInterface $resource, CompiledTransformMappingInterface $transformMapping, $instance)
     {
-        return $this->exportModel($context, $transformMapping, $instance);
+        return $this->exportModel($context, $resource, $transformMapping, $instance);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function exportAll(ContextInterface $context, CompiledTransformMappingInterface $transformMapping, $instance)
+    public function exportAll(ContextInterface $context, ResourceInterface $resource, CompiledTransformMappingInterface $transformMapping, $instance)
     {
-        return $this->exportModel($context, $transformMapping, $instance, true);
+        return $this->exportModel($context, $resource, $transformMapping, $instance, true);
     }
 
     protected function exportEmbeds(
@@ -106,7 +107,7 @@ class DefaultTransform implements TransformInterface, \Serializable
                 continue;
             }
 
-            $object = $this->exportEmbed($context, $embed, $instance);
+            $object = $this->exportEmbed($context, $response->getResource(), $embed, $instance);
 
             if ($object !== null) {
                 $response->addResource($name, $object, false);
@@ -114,7 +115,7 @@ class DefaultTransform implements TransformInterface, \Serializable
         }
     }
 
-    protected function exportEmbed(ContextInterface $context, Embed $embed, $instance)
+    protected function exportEmbed(ContextInterface $context, ResourceInterface $resource, Embed $embed, $instance)
     {
         $routeName = $embed->getRouteName();
         $embedResourceDefinition = $this->compilerCache->findResourceDefinition($routeName);
@@ -136,13 +137,13 @@ class DefaultTransform implements TransformInterface, \Serializable
                         $items = [];
 
                         foreach ($value as $item) {
-                            $export = $embedTransform->export($embedContext, $embedTransformMapping, $item);
+                            $export = $embedTransform->export($embedContext, $resource, $embedTransformMapping, $item);
                             $items[] = $export;
                         }
 
-                        return $this->factory->createCollectionResponse($embedResourceDefinition, $context, null, $items);
+                        return $this->factory->createCollectionResponse($embedResourceDefinition, $resource, $context, null, $items);
                     } else {
-                        return $embedTransform->export($embedContext, $embedTransformMapping, $value);
+                        return $embedTransform->export($embedContext, $resource, $embedTransformMapping, $value);
                     }
                 }
             }
@@ -153,6 +154,7 @@ class DefaultTransform implements TransformInterface, \Serializable
 
     protected function exportModel(
         ContextInterface $context = null,
+        ResourceInterface $resource,
         CompiledTransformMappingInterface $transformMapping,
         $instance,
         $allFields = false)
@@ -179,7 +181,7 @@ class DefaultTransform implements TransformInterface, \Serializable
             }
         }
 
-        $response = $this->factory->createInstanceResponse($resourceDefinition, $context, $href, $item, $instance);
+        $response = $this->factory->createInstanceResponse($resourceDefinition, $resource, $context, $href, $item, $instance);
         $this->exportEmbeds($transformMapping, $context, $response, $instance);
 
         return $response;

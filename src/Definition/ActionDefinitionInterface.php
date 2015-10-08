@@ -1,6 +1,7 @@
 <?php
 namespace Rested\Definition;
 
+use Rested\ResourceInterface;
 use Rested\Transforms\TransformInterface;
 use Rested\Transforms\TransformMappingInterface;
 
@@ -75,7 +76,7 @@ interface ActionDefinitionInterface
     /**
      * @return bool
      */
-    public function isAffordanceAvailable($instance = null);
+    public function isAffordanceAvailable(ResourceInterface $resource, $instance = null);
 
     /**
      * @return $this
