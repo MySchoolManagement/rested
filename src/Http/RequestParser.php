@@ -6,7 +6,7 @@ use Rested\Definition\Parameter;
 class RequestParser
 {
 
-    const DEFAULT_LIMIT = 50;
+    const DEFAULT_LIMIT = 100;
     const DEFAULT_OFFSET = 0;
 
     /**
